@@ -1,8 +1,11 @@
 # MultiOutputIHGP
-Multi-Output Infinite Horizon Gaussian Process
+Implementation of the Multi-Output Infinite Horizon Gaussian Process (MOIHGP).
 
 The code includes [LBFGS++](https://github.com/yixuan/LBFGSpp), which is a header-only c++ implementation of L-BFGS-B algorithm.
-# Dependencies
+
+Compared to the original MOIHGP, the computation speed has improved by applying [Orthogonal Instantaneous Linear Mixing Model (OILMM)](https://github.com/wesselb/oilmm).
+
+## Dependencies
 - [Eigen3](https://eigen.tuxfamily.org/index.php?title=Main_Page)
 
 ## Citation
