@@ -40,9 +40,9 @@ include_directories(SYSTEM)
 
 ## Build additional executables
 
-add_executable(example src/example.cpp)
+add_executable(example_online_learning examples/example_online_learning.cpp)
 
-target_link_libraries(example
+target_link_libraries(example_online_learning
   ${EXTERNAL_LIBS}
   Eigen3::Eigen
   pthread
