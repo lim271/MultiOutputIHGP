@@ -7,8 +7,8 @@
 #include <pthread.h>
 #include <Eigen/Core>
 #include <Eigen/SVD>
-#include <pinv.h>
 #include <moihgp/ihgp.h>
+#include <utils/pinv.h>
 
 
 
@@ -104,7 +104,7 @@ public:
         }
         S.setOnes(num_latent);
         sigma = 1e-1;
-    }
+    } // constructor MOIHGP
 
     void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd& y, const std::vector<std::vector<Eigen::VectorXd>>& dx, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd& yhat, std::vector<std::vector<Eigen::VectorXd>>& dxnew)
     {
@@ -172,7 +172,7 @@ public:
         sqrtS.setZero();
         for (int idx=0; idx < _num_latent; idx++) sqrtS(idx, idx) = sqrt(S(idx));
         yhat = U * sqrtS * Tyhat;
-    }
+    } // void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd& y, const std::vector<std::vector<Eigen::VectorXd>>& dx, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd& yhat, std::vector<std::vector<Eigen::VectorXd>>& dxnew)
 
     void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd &yhat)
     {
@@ -236,7 +236,7 @@ public:
         sqrtS.setZero();
         for (int idx=0; idx < _num_latent; idx++) sqrtS(idx, idx) = sqrt(S(idx));
         yhat = U * sqrtS * Tyhat;
-    }
+    } // void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd &yhat)
 
     void step(std::vector<Eigen::VectorXd>& x, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd& yhat)
     {
@@ -273,7 +273,7 @@ public:
         sqrtS.setZero();
         for (int idx=0; idx < _num_latent; idx++) sqrtS(idx, idx) = sqrt(S(idx));
         yhat = U * sqrtS * Tyhat;
-    }
+    } // void step(std::vector<Eigen::VectorXd>& x, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd& yhat)
 
     void update(const Eigen::VectorXd &params)
     {
@@ -300,7 +300,7 @@ public:
             Eigen::VectorXd tmp = igp_params.col(idx);
             _IGPs[idx]->update(tmp);
         }
-    }
+    } // void update(const Eigen::VectorXd &params)
 
     double negLogLikelihood(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, const std::vector<std::vector<Eigen::VectorXd> >& dx, Eigen::VectorXd &grad)
     {
@@ -422,7 +422,7 @@ public:
             igp_grad.col(idx) = args[idx].grad;
         }
         grad.tail(igp_grad.size()) = igp_grad;
-    }
+    } // double negLogLikelihood(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, const std::vector<std::vector<Eigen::VectorXd> >& dx, Eigen::VectorXd &grad)
 
     double negLogLikelihood(Eigen::VectorXd *x, const Eigen::VectorXd &y)
     {
@@ -481,7 +481,7 @@ public:
         {
             loss += args[idx].loss;
         }
-    }
+    } // double negLogLikelihood(Eigen::VectorXd *x, const Eigen::VectorXd &y)
 
     size_t getIGPDim()
     {

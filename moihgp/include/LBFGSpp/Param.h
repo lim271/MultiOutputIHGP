@@ -328,16 +328,16 @@ public:
     ///
     LBFGSBParam()
     {
-        m              = 4;
+        m              = 6;
         epsilon        = Scalar(1e-5);
         epsilon_rel    = Scalar(1e-5);
         past           = 1;
         delta          = Scalar(1e-10);
-        max_iterations = 5;
+        max_iterations = 0;
         max_submin     = 10;
-        max_linesearch = 5;
+        max_linesearch = 20;
         min_step       = Scalar(1e-20);
-        max_step       = Scalar(1.0);
+        max_step       = Scalar(1e+20);
         ftol           = Scalar(1e-4);
         wolfe          = Scalar(0.9);
     }

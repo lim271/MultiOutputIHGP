@@ -5,7 +5,7 @@
 #include <list>
 #include <Eigen/Core>
 #include <unsupported/Eigen/MatrixFunctions>
-#include <LBFGSB.h>
+#include <LBFGSpp/LBFGSB.h>
 #include <moihgp/moihgp.h>
 
 
@@ -38,7 +38,7 @@ public:
         Eigen::VectorXd dparams = params - oldparams;
         _gp->update(params);
         Eigen::VectorXd Bp(_nparam);
-        if (bfgs_mat.m_m > 0)
+        if (bfgs_mat.get_m() > 0)
         {
             bfgs_mat.apply_Hv(dparams, _gamma, Bp);    // p = gamma*inv(B)*grad
         }
@@ -86,11 +86,6 @@ public:
 
     MOIHGPOnlineLearning(const double& dt, const size_t& num_output, const size_t& num_latent, const double& gamma, const size_t& windowsize)
     {
-        init(dt, num_output, num_latent, gamma, windowsize);
-    }
-
-    void init(const double& dt, const size_t& num_output, const size_t& num_latent, const double& gamma, const size_t& windowsize)
-    {
         _dt = dt;
         _num_output = num_output;
         _num_latent = num_latent;
@@ -107,6 +102,10 @@ public:
         _gamma = gamma;
         _windowsize = windowsize;
         _params = _moihgp->getParams();
+        _LBFGSB_param.m = 5;
+        _LBFGSB_param.max_iterations = 5;
+        _LBFGSB_param.max_linesearch = 5;
+        _LBFGSB_param.max_step = 1.0;
         _solver = new LBFGSpp::LBFGSBSolver<double>(_LBFGSB_param);
         _obj = new Objective<StateSpace>(_nparam, _windowsize, _gamma, _moihgp);
     }
@@ -123,7 +122,7 @@ public:
         _obj->push_back(stage);
         x = xnew;
         dx = dxnew;
-        _obj->bfgs_mat = _solver->m_bfgs;
+        _obj->bfgs_mat = _solver->getBFGSMat();
         _obj->oldparams = _params;
         double fx;
         int niter = _solver->minimize(*_obj, _params, fx, _lb, _ub);

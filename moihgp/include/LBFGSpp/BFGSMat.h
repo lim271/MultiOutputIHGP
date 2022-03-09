@@ -33,7 +33,7 @@ private:
     typedef Eigen::Ref<const Vector> RefConstVec;
     typedef std::vector<int> IndexSet;
 
-    //int    m_m;      // Maximum number of correction vectors
+    int    m_m;      // Maximum number of correction vectors
     Scalar m_theta;  // theta * I is the initial approximation to the Hessian matrix
     Matrix m_s;      // History of the s vectors
     Matrix m_y;      // History of the y vectors
@@ -52,7 +52,6 @@ private:
     BKLDLT<Scalar>              m_permMsolver;  // Represents the permutated M matrix
 
 public:
-    int    m_m;      // Maximum number of correction vectors
     // Constructor
     BFGSMat() {}
 
@@ -487,6 +486,11 @@ public:
         MWQtv.tail(m_ncorr) *= m_theta;
         res.noalias() = -WP * MWQtv;
         return true;
+    }
+
+    inline int get_m()
+    {
+        return m_m;
     }
 };
 

@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <Eigen/Core>
 #include <unsupported/Eigen/MatrixFunctions>
-#include <DARE.h>
+#include <utils/dare.h>
 
 
 
@@ -168,8 +168,8 @@ public:
                 dAKHA[idx] = dA[idx] -dK[idx] * _ss.H * A - K * _ss.H * dA[idx];
                 HdA[idx] = (_ss.H * dA[idx]).transpose();
             }
-        } // end for
-    }
+        } // for (int idx = 0; idx < _nparam; idx++)
+    } // void update(const Eigen::VectorXd& params)
 
     double negLogLikelihood(const Eigen::VectorXd& x, const double& y)
     {

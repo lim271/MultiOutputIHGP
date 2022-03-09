@@ -30,9 +30,9 @@ private:
     typedef Eigen::Map<Vector> MapVec;
     typedef std::vector<int> IndexSet;
 
-    //const LBFGSBParam<Scalar>& m_param;  // Parameters to control the LBFGS algorithm
-    LBFGSBParam<Scalar> m_param;  // Parameters to control the LBFGS algorithm
-    //BFGSMat<Scalar, true>      m_bfgs;   // Approximation to the Hessian matrix
+    const LBFGSBParam<Scalar>& m_param;  // Parameters to control the LBFGS algorithm
+    // LBFGSBParam<Scalar> m_param;  // Parameters to control the LBFGS algorithm
+    BFGSMat<Scalar, true>      m_bfgs;   // Approximation to the Hessian matrix
     Vector                     m_fx;     // History of the objective function values
     Vector                     m_xp;     // Old x
     Vector                     m_grad;   // New gradient
@@ -240,7 +240,10 @@ public:
         return k;
     }
 
-    BFGSMat<Scalar, true>      m_bfgs;   // Approximation to the Hessian matrix
+    BFGSMat<Scalar, true> getBFGSMat()
+    {
+        return m_bfgs;
+    }
 
 };
 
