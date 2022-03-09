@@ -110,7 +110,7 @@ public:
         _obj = new Objective<StateSpace>(_nparam, _windowsize, _gamma, _moihgp);
     }
 
-    Eigen::MatrixXd step(const Eigen::VectorXd &y) {
+    Eigen::MatrixXd step(const Eigen::VectorXd& y) {
         Eigen::VectorXd yhat;
         std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
         std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));

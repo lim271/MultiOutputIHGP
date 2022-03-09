@@ -2,7 +2,7 @@
 #include <list>
 #include <Eigen/Core>
 #include <iostream>
-#include <moihgp/moihgp_online.h>
+#include <moihgp/moihgp_regression.h>
 #include <moihgp/matern32ss.h>
 #include <time.h>
 
@@ -13,10 +13,9 @@ int main()
     double gamma = 0.9;
     size_t num_output = 2;
     size_t num_latent = 2;
-    size_t windowsize = 3;
     Eigen::MatrixXd H(num_output, num_latent);
     H << 0.7, 0.3, -0.3, 0.7;
-    std::list<Eigen::VectorXd> data;
+    std::vector<Eigen::VectorXd> data;
     double t = 0.0;
     while (t < 2 * M_PI)
     {
@@ -25,14 +24,16 @@ int main()
         data.push_back(H * x + 0.1 * Eigen::VectorXd(num_output).setRandom());
         t += dt;
     }
-    moihgp::MOIHGPOnlineLearning<moihgp::Matern32StateSpace> gp(dt, num_output, num_latent, gamma, windowsize);
-    std::list<Eigen::VectorXd> yhat;
-    for (std::list<Eigen::VectorXd>::iterator y=data.begin(); y!=data.end(); y++)
-    {
-        clock_t tic = clock();
-        yhat.push_back(gp.step(*y));
-        clock_t toc = clock();
-        std::cout << "Elapsed time per step:" << double(toc - tic) / 1000.0 << "ms" << std::endl;
-    }
+    data.shrink_to_fit();
+    size_t num_data = data.size();
+
+    moihgp::MOIHGPRegression<moihgp::Matern32StateSpace> gp(dt, num_output, num_latent, num_data);
+    clock_t tic = clock();
+    int niter = gp.fit(data);
+    clock_t toc = clock();
+
+    std::cout << "Iteration count: " << niter << std::endl;
+    std::cout << "Elapsed time: " << double(toc - tic) / 1000.0 << "ms" << std::endl;
+
     return 0;
 }
