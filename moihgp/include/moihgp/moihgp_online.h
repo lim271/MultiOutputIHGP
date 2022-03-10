@@ -1,5 +1,6 @@
 #ifndef _MOIHGP_ONLINE_H_
 #define _MOIHGP_ONLINE_H_
+
 #include <cstdlib>
 #include <vector>
 #include <list>
@@ -12,32 +13,33 @@
 
 namespace moihgp {
 
-class Stage {
-public:
-    Stage() {}
-    std::vector<Eigen::VectorXd> x;
-    Eigen::VectorXd y;
-    std::vector<std::vector<Eigen::VectorXd>> dx;
-};
+
 
 template <typename StateSpace>
 class Objective {
 
 public:
 
-    Objective(const size_t& nparam, const size_t& windowsize, const double& gamma, MOIHGP<StateSpace>* gp)
+    Objective(MOIHGP<StateSpace>* gp, const double& gamma, const size_t& windowsize)
     {
         _gp = gp;
-        _nparam = nparam;
+        _dim = _gp->getIGPDim();
+        _num_param = _gp->getNumParam();
+        _igp_num_param = _gp->getNumIGPParam();
+        _num_output = _gp->getNumOutput();
+        _num_latent = _gp->getNumLatent();
         _gamma = gamma;
         _windowsize = windowsize;
+        _x = std::vector<Eigen::VectorXd>(_num_latent, Eigen::VectorXd(_dim).setZero());
+        _dx = std::vector<std::vector<Eigen::VectorXd>>(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
     }
+
 
     double operator()(const Eigen::VectorXd& params, Eigen::VectorXd& grad)
     {
         Eigen::VectorXd dparams = params - oldparams;
         _gp->update(params);
-        Eigen::VectorXd Bp(_nparam);
+        Eigen::VectorXd Bp(_num_param);
         if (bfgs_mat.get_m() > 0)
         {
             bfgs_mat.apply_Hv(dparams, _gamma, Bp);    // p = gamma*inv(B)*grad
@@ -48,53 +50,79 @@ public:
         }
         double loss = 0.5 * (dparams.transpose() * Bp)(0, 0);
         grad = Bp;
-        for (std::list<Stage>::iterator it = buffer.begin(); it != buffer.end(); it++)
+        std::vector<Eigen::VectorXd> x(_num_latent, Eigen::VectorXd(_dim).setZero());
+        std::vector<std::vector<Eigen::VectorXd>> dx(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
+        x = _x;
+        dx = _dx;
+        for (std::list<Eigen::VectorXd>::iterator it = Y.begin(); it != Y.end(); it++)
         {
-            Eigen::VectorXd g(_nparam);
-            loss += _gp->negLogLikelihood(it->x, it->y, it->dx, g);
+            Eigen::VectorXd& y = *it;
+            std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
+            std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
+            _gp->step(x, y, dx, xnew, dxnew);
+            Eigen::VectorXd g(_num_param);
+            loss += _gp->negLogLikelihood(x, y, dx, g);
             grad += g;
+            x = xnew;
+            dx = dxnew;
         }
         return loss;
     }
 
-    void push_back(Stage stage)
+
+    void push_back(Eigen::MatrixXd y)
     {
-        buffer.push_back(stage);
-        if (buffer.size() > _windowsize)
+        Y.push_back(y);
+        while (Y.size() > _windowsize)
         {
-            buffer.pop_front();
+            std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
+            std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
+            _gp->step(_x, *Y.begin(), _dx, xnew, dxnew);
+            Y.pop_front();
+            _x = xnew;
+            _dx = dxnew;
         }
     }
 
+
     Eigen::VectorXd oldparams;
     LBFGSpp::BFGSMat<double, true> bfgs_mat;
-    std::list<Stage> buffer;
+    std::list<Eigen::VectorXd> Y;
 
 private:
 
-    size_t _nparam;
+    size_t _num_output;
+    size_t _num_latent;
+    size_t _igp_num_param;
+    size_t _num_param;
+    size_t _dim;
     size_t _windowsize;
     double _gamma;
     MOIHGP<StateSpace>* _gp;
+    std::vector<Eigen::VectorXd> _x;
+    std::vector<std::vector<Eigen::VectorXd>> _dx;
 
 };
+
+
 
 template <typename StateSpace>
 class MOIHGPOnlineLearning {
 
 public:
 
-    MOIHGPOnlineLearning(const double& dt, const size_t& num_output, const size_t& num_latent, const double& gamma, const size_t& windowsize)
+    MOIHGPOnlineLearning(const double& dt, const size_t& num_output, const size_t& num_latent, const double& gamma, const size_t& windowsize, const bool& threading)
     {
         _dt = dt;
         _num_output = num_output;
         _num_latent = num_latent;
-        _moihgp = new MOIHGP<StateSpace>(dt, num_output, num_latent);
+        _threading = threading;
+        _moihgp = new MOIHGP<StateSpace>(dt, num_output, num_latent, threading);
         _dim = _moihgp->getIGPDim();
         _igp_num_param = _moihgp->getNumIGPParam();
-        _nparam = _moihgp->getNumParam();
-        _lb = Eigen::VectorXd(_nparam).setConstant(-10.0);
-        _ub = Eigen::VectorXd(_nparam).setConstant( 10.0);
+        _num_param = _moihgp->getNumParam();
+        _lb = Eigen::VectorXd(_num_param).setConstant(-10.0);
+        _ub = Eigen::VectorXd(_num_param).setConstant( 10.0);
         _lb.tail(_igp_num_param * _num_latent + _num_latent + 1).setConstant(1e-4);
         _ub.tail(_igp_num_param * _num_latent + _num_latent + 1).setConstant(10.0);
         x.assign(_num_latent, Eigen::VectorXd(_dim).setZero());
@@ -107,19 +135,16 @@ public:
         _LBFGSB_param.max_linesearch = 5;
         _LBFGSB_param.max_step = 1.0;
         _solver = new LBFGSpp::LBFGSBSolver<double>(_LBFGSB_param);
-        _obj = new Objective<StateSpace>(_nparam, _windowsize, _gamma, _moihgp);
+        _obj = new Objective<StateSpace>(_moihgp, _gamma, _windowsize);
     }
+
 
     Eigen::MatrixXd step(const Eigen::VectorXd& y) {
         Eigen::VectorXd yhat;
         std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
         std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
-        _moihgp->step(x, y, dx, xnew, yhat, dxnew);
-        Stage stage;
-        stage.x = xnew;
-        stage.y = y;
-        stage.dx = dxnew;
-        _obj->push_back(stage);
+        _moihgp->step(x, y, xnew, yhat);
+        _obj->push_back(y);
         x = xnew;
         dx = dxnew;
         _obj->bfgs_mat = _solver->getBFGSMat();
@@ -129,16 +154,19 @@ public:
         return yhat;
     }
 
+
     std::vector<Eigen::VectorXd> x;
     std::vector<std::vector<Eigen::VectorXd>> dx;
 
 private:
+
     MOIHGP<StateSpace>* _moihgp;
+    bool _threading;
     double _dt;
     size_t _dim;
     size_t _num_output;
     size_t _num_latent;
-    size_t _nparam;
+    size_t _num_param;
     size_t _igp_num_param;
     size_t _windowsize;
     double _gamma;
@@ -152,5 +180,7 @@ private:
 };
 
 }
+
+
 
 #endif

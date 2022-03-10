@@ -7,12 +7,15 @@
 #include <time.h>
 
 
+
 int main()
 {
+
     double dt = 0.1;
     double gamma = 0.9;
     size_t num_output = 2;
     size_t num_latent = 2;
+    bool threading = true;
     Eigen::MatrixXd H(num_output, num_latent);
     H << 0.7, 0.3, -0.3, 0.7;
     std::vector<Eigen::VectorXd> data;
@@ -27,7 +30,7 @@ int main()
     data.shrink_to_fit();
     size_t num_data = data.size();
 
-    moihgp::MOIHGPRegression<moihgp::Matern32StateSpace> gp(dt, num_output, num_latent, num_data);
+    moihgp::MOIHGPRegression<moihgp::Matern32StateSpace> gp(dt, num_output, num_latent, num_data, threading);
     clock_t tic = clock();
     int niter = gp.fit(data);
     clock_t toc = clock();
@@ -36,4 +39,5 @@ int main()
     std::cout << "Elapsed time: " << double(toc - tic) / 1000.0 << "ms" << std::endl;
 
     return 0;
+
 }

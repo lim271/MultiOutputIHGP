@@ -30,6 +30,7 @@ public:
         update(_ss.getParams());
     }
 
+
     void step(const Eigen::VectorXd& x, const double& y, const std::vector<Eigen::VectorXd>& dx, Eigen::VectorXd& xnew, double& yhat, std::vector<Eigen::VectorXd>& dxnew)
     {
         if (std::isnan(y))
@@ -52,6 +53,28 @@ public:
         }
     }
 
+
+    void step(const Eigen::VectorXd& x, const double& y, const std::vector<Eigen::VectorXd>& dx, Eigen::VectorXd& xnew, std::vector<Eigen::VectorXd>& dxnew)
+    {
+        if (std::isnan(y))
+        {
+            xnew = A * x;
+            for (int idx = 0; idx < _nparam; idx++)
+            {
+                dxnew[idx] = dA[idx] * x + A * dx[idx];
+            }
+        }
+        else
+        {
+            xnew = AKHA * x + K * y;
+            for (int idx = 0; idx < _nparam; idx++)
+            {
+                dxnew[idx] = dAKHA[idx] * x + AKHA * dx[idx] + dK[idx] * y;
+            }
+        }
+    }
+
+
     void step(const Eigen::VectorXd& x, const double& y, Eigen::VectorXd& xnew, double& yhat)
     {
         if (std::isnan(y))
@@ -66,11 +89,13 @@ public:
         }
     }
 
+
     void step(const Eigen::VectorXd& x, Eigen::VectorXd& xnew, double& yhat)
     {
         xnew = A * x;
         yhat = xnew(0, 0);
     }
+
 
     void backwardSmoother(const std::vector<Eigen::VectorXd>& X, std::vector<Eigen::VectorXd>& Xprev, Eigen::MatrixXd& P, Eigen::MatrixXd& G)
     {
@@ -85,6 +110,7 @@ public:
         }
         std::reverse(Xprev.begin(), Xprev.end());
     }
+
 
     void update(const Eigen::VectorXd& params)
     {
@@ -171,12 +197,14 @@ public:
         } // for (int idx = 0; idx < _nparam; idx++)
     } // void update(const Eigen::VectorXd& params)
 
+
     double negLogLikelihood(const Eigen::VectorXd& x, const double& y)
     {
         double v = y - (HA * x)(0, 0);
         double loss = 0.5 * (v * v / S + log(S));
         return loss;
     }
+
 
     double negLogLikelihood(const Eigen::VectorXd& x, const double& y, const std::vector<Eigen::VectorXd>& dx, Eigen::VectorXd& grad)
     {
@@ -190,20 +218,24 @@ public:
         return loss;
     }
 
+
     Eigen::VectorXd getParams()
     {
         return _ss.getParams();
     }
+
 
     size_t getNumParam()
     {
         return _nparam;
     }
 
+
     size_t getDim()
     {
         return _dim;
     }
+
 
     double S;
     Eigen::MatrixXd A;
@@ -227,6 +259,10 @@ private:
 
 };
 
+
+
 } // namespace moihgp
+
+
 
 #endif
