@@ -5,6 +5,26 @@ The code includes [LBFGS++](https://github.com/yixuan/LBFGSpp), which is a heade
 
 Compared to the original MOIHGP, the computation speed has improved by applying [Orthogonal Instantaneous Linear Mixing Model (OILMM)](https://github.com/wesselb/oilmm).
 
+## Build
+```
+cd moihgp
+mkdir build && cd build
+cmake ..
+make
+```
+
+## Examples
+- Regression example
+```
+cd moihgp/build
+./example_regression
+```
+- Online learning example
+```
+cd moihgp/build
+./example_online_learning
+```
+
 ## Dependencies
 - [Eigen3](https://eigen.tuxfamily.org/index.php?title=Main_Page)
 
