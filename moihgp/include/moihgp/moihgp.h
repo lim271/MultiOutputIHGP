@@ -121,6 +121,15 @@ public:
     } // constructor MOIHGP
 
 
+    ~MOIHGP()
+    {
+        for(int idx=0; idx < _num_latent; idx++)
+        {
+            delete _IGPs[idx];
+        }
+    }
+
+
     void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd& y, const std::vector<std::vector<Eigen::VectorXd>>& dx, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd& yhat, std::vector<std::vector<Eigen::VectorXd>>& dxnew)
     {
         std::vector<int> idx_observed;
@@ -159,7 +168,7 @@ public:
         Eigen::VectorXd Tyhat(_num_latent);
         if (_threading)
         {
-            pthread_t *threads = new pthread_t[_num_latent];
+            pthread_t* threads = new pthread_t[_num_latent];
             Args<IHGP<StateSpace>>* args = new Args<IHGP<StateSpace>>[_num_latent];
             for (int idx=0; idx < _num_latent; idx++)
             {
@@ -185,6 +194,8 @@ public:
                 Tyhat(idx) = args[idx].yhat;
                 dxnew[idx] = args[idx].dxnew;
             }
+            delete [] threads;
+            delete [] args;
         }
         else
         {
@@ -237,7 +248,7 @@ public:
         }
         if (_threading)
         {
-            pthread_t *threads = new pthread_t[_num_latent];
+            pthread_t* threads = new pthread_t[_num_latent];
             Args<IHGP<StateSpace>>* args = new Args<IHGP<StateSpace>>[_num_latent];
             for (int idx=0; idx < _num_latent; idx++)
             {
@@ -262,6 +273,8 @@ public:
                 xnew[idx] = args[idx].xnew;
                 dxnew[idx] = args[idx].dxnew;
             }
+            delete [] threads;
+            delete [] args;
         }
         else
         {
@@ -333,6 +346,8 @@ public:
                 xnew[idx] = args[idx].xnew;
                 Tyhat(idx) = args[idx].yhat;
             }
+            delete [] threads;
+            delete [] args;
         }
         else
         {
@@ -359,7 +374,7 @@ public:
         Eigen::VectorXd Tyhat(_num_latent);
         if (_threading)
         {
-            pthread_t *threads = new pthread_t[_num_latent];
+            pthread_t* threads = new pthread_t[_num_latent];
             Args<IHGP<StateSpace> > *args = new Args<IHGP<StateSpace> >[_num_latent];
             for (int idx=0; idx < _num_latent; idx++)
             {
@@ -381,6 +396,8 @@ public:
                 xnew[idx] = args[idx].xnew;
                 Tyhat(idx) = args[idx].yhat;
             }
+            delete [] threads;
+            delete [] args;
         }
         else
         {
@@ -521,7 +538,7 @@ public:
         Eigen::MatrixXd igp_grad(_igp_nparam, _num_latent);
         if (_threading)
         {
-            pthread_t *threads = new pthread_t[_num_latent];
+            pthread_t* threads = new pthread_t[_num_latent];
             Args<IHGP<StateSpace> > *args = new Args<IHGP<StateSpace> >[_num_latent];
             for (int idx=0; idx < _num_latent; idx++)
             {
@@ -545,6 +562,8 @@ public:
                 loss += args[idx].loss;
                 igp_grad.col(idx) = args[idx].grad;
             }
+            delete [] threads;
+            delete [] args;
         }
         else{
             for (int idx=0; idx < _num_latent; idx++)
@@ -596,7 +615,7 @@ public:
         double loss = 0.5 * log(S.sum()) + 0.5 * (_num_output - _num_latent) * log(sigma) + 0.5 / sigma * ((I - U * U.transpose()) * y).norm();
         if (_threading)
         {
-            pthread_t *threads = new pthread_t[_num_latent];
+            pthread_t* threads = new pthread_t[_num_latent];
             Args<IHGP<StateSpace> > *args = new Args<IHGP<StateSpace> >[_num_latent];
             for (int idx=0; idx < _num_latent; idx++)
             {
@@ -617,6 +636,8 @@ public:
             {
                 loss += args[idx].loss;
             }
+            delete [] threads;
+            delete [] args;
         }
         else
         {

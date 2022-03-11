@@ -1,5 +1,6 @@
 #ifndef _MATERN32SS_H_
 #define _MATERN32SS_H_
+
 #include <cstdlib>
 #include <vector>
 #include <Eigen/Core>
@@ -34,6 +35,7 @@ public:
         update(params);
     }
 
+
     void update(const Eigen::VectorXd& params)
     {
         double magnitude = params(0);
@@ -60,20 +62,24 @@ public:
         _params = params;
     }
 
+
     size_t getDim()
     {
         return _dim;
     }
+
 
     size_t getNumParam()
     {
         return _dim;
     }
 
+
     Eigen::VectorXd getParams()
     {
         return _params;
     }
+
 
     Eigen::MatrixXd F;
     Eigen::MatrixXd Pinf;
@@ -91,6 +97,10 @@ private:
 
 }; // class Matern32StateSpace
 
+
+
 } // namespace moihgp
+
+
 
 #endif

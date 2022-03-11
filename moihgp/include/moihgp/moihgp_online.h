@@ -54,11 +54,11 @@ public:
         std::vector<std::vector<Eigen::VectorXd>> dx(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
         x = _x;
         dx = _dx;
+        std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
+        std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
         for (std::list<Eigen::VectorXd>::iterator it = Y.begin(); it != Y.end(); it++)
         {
             Eigen::VectorXd& y = *it;
-            std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
-            std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
             _gp->step(x, y, dx, xnew, dxnew);
             Eigen::VectorXd g(_num_param);
             loss += _gp->negLogLikelihood(x, y, dx, g);
@@ -136,6 +136,14 @@ public:
         _LBFGSB_param.max_step = 1.0;
         _solver = new LBFGSpp::LBFGSBSolver<double>(_LBFGSB_param);
         _obj = new Objective<StateSpace>(_moihgp, _gamma, _windowsize);
+    }
+
+
+    ~MOIHGPOnlineLearning()
+    {
+        delete _moihgp;
+        delete _solver;
+        delete _obj;
     }
 
 

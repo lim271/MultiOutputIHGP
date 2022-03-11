@@ -35,19 +35,19 @@ public:
     {
         double loss = 0.0;
         grad.setZero();
-        std::vector<Eigen::VectorXd> x(_num_latent, Eigen::VectorXd(_dim).setZero());
-        std::vector<std::vector<Eigen::VectorXd> > dx(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
+        _x = std::vector<Eigen::VectorXd>(_num_latent, Eigen::VectorXd(_dim).setZero());
+        _dx = std::vector<std::vector<Eigen::VectorXd>>(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
+        _xnew = std::vector<Eigen::VectorXd>(_num_latent, Eigen::VectorXd(_dim).setZero());
+        _dxnew = std::vector<std::vector<Eigen::VectorXd>>(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
         for (std::vector<Eigen::VectorXd>::iterator it = Y.begin(); it != Y.end(); it++)
         {
-            Eigen::VectorXd& y = *it;
+            //Eigen::VectorXd& y = *it;
             Eigen::VectorXd g(_num_param);
-            std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
-            std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
-            _gp->step(x, y, dx, xnew, dxnew);
-            loss += _gp->negLogLikelihood(x, y, dx, g);
+            _gp->step(_x, *it, _dx, _xnew, _dxnew);
+            loss += _gp->negLogLikelihood(_x, *it, _dx, g);
             grad += g;
-            x = xnew;
-            dx = dxnew;
+            _x = _xnew;
+            _dx = _dxnew;
         }
         return loss;
     }
@@ -64,6 +64,10 @@ private:
     size_t _num_data;
     double _gamma;
     MOIHGP<StateSpace>* _gp;
+    std::vector<Eigen::VectorXd> _x;
+    std::vector<std::vector<Eigen::VectorXd>> _dx;
+    std::vector<Eigen::VectorXd> _xnew;
+    std::vector<std::vector<Eigen::VectorXd>> _dxnew;
 
 };
 
@@ -92,6 +96,13 @@ public:
         _params = _moihgp->getParams();
         _solver = new LBFGSpp::LBFGSBSolver<double>(_LBFGSB_param);
         _obj = new Objective<StateSpace>(_num_data, _moihgp);
+    }
+
+    ~MOIHGPRegression()
+    {
+        delete _moihgp;
+        delete _solver;
+        delete _obj;
     }
 
 

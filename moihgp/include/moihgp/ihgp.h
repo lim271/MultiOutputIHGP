@@ -1,5 +1,6 @@
 #ifndef _IHGP_H_
 #define _IHGP_H_
+
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
@@ -10,6 +11,8 @@
 
 
 namespace moihgp{
+
+
 
 template <typename StateSpace>
 class IHGP{
