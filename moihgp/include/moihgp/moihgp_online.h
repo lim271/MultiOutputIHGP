@@ -8,7 +8,6 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include <LBFGSpp/LBFGSB.h>
 #include <moihgp/moihgp.h>
-#include <iostream>
 
 
 
