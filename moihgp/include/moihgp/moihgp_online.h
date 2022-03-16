@@ -148,7 +148,6 @@ public:
         _LBFGSB_param.m = 5;
         _LBFGSB_param.max_iterations = 5;
         _LBFGSB_param.max_linesearch = 10;
-        _LBFGSB_param.max_step = 1.0;
         _solver = new LBFGSpp::LBFGSBSolver<double>(_LBFGSB_param);
         _obj = new Objective<StateSpace>(_moihgp, _gamma, _windowsize);
     }
