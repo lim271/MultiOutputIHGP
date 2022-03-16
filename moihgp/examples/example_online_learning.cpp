@@ -14,10 +14,10 @@ int main()
     double dt = 0.1;
     double gamma = 0.9;
     size_t num_output = 2;
-    size_t num_latent = 2;
+    size_t num_latent = 1;
     size_t windowsize = 3;
-    bool threading = true;
-    Eigen::MatrixXd H(num_output, num_latent);
+    bool threading = false;
+    Eigen::MatrixXd H(2, 2);
     H << 0.7, 0.3, -0.3, 0.7;
     std::list<Eigen::VectorXd> data;
     double t = 0.0;

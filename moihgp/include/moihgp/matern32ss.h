@@ -21,16 +21,16 @@ public:
         Pinf = Eigen::MatrixXd(_dim, _dim).setZero();
         H = Eigen::MatrixXd(1, _dim);
         H << 1.0, 0.0;
-        dF.assign(_nparam, Eigen::MatrixXd(_dim, _dim).setZero());
-        dPinf.reserve(_nparam);
+        dF.assign(_num_param, Eigen::MatrixXd(_dim, _dim).setZero());
+        dPinf.reserve(_num_param);
         dPinf.push_back(Eigen::MatrixXd(_dim, _dim).setIdentity());
         dPinf.push_back(Eigen::MatrixXd(_dim, _dim).setZero());
         dPinf.push_back(Eigen::MatrixXd(_dim, _dim).setZero());
-        dR.reserve(_nparam);
+        dR.reserve(_num_param);
         dR.push_back(0.0);
         dR.push_back(0.0);
         dR.push_back(1.0);
-        Eigen::VectorXd params(_nparam);
+        Eigen::VectorXd params(_num_param);
         params << 1.0, 1.0, 0.1;
         update(params);
     }
@@ -71,7 +71,7 @@ public:
 
     size_t getNumParam()
     {
-        return _dim;
+        return _num_param;
     }
 
 
@@ -92,7 +92,7 @@ public:
 private:
 
     size_t _dim = 2;
-    size_t _nparam = 3;
+    size_t _num_param = 3;
     Eigen::VectorXd _params;
 
 }; // class Matern32StateSpace

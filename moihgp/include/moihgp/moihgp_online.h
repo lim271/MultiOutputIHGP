@@ -8,6 +8,7 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include <LBFGSpp/LBFGSB.h>
 #include <moihgp/moihgp.h>
+#include <iostream>
 
 
 
@@ -28,15 +29,9 @@ public:
         _igp_num_param = _gp->getNumIGPParam();
         _num_output = _gp->getNumOutput();
         _num_latent = _gp->getNumLatent();
+        oldparams = _gp->getParams();
         _gamma = gamma;
-        if (windowsize < 1)
-        {
-            _windowsize = 1;
-        }
-        else
-        {
-            _windowsize = windowsize;
-        }
+        _windowsize = windowsize;
         _x = std::vector<Eigen::VectorXd>(_num_latent, Eigen::VectorXd(_dim).setZero());
         _dx = std::vector<std::vector<Eigen::VectorXd>>(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
         _ma.setZero(_num_output);
@@ -143,7 +138,14 @@ public:
         x.assign(_num_latent, Eigen::VectorXd(_dim).setZero());
         dx.assign(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
         _gamma = gamma;
-        _windowsize = windowsize;
+        if (windowsize < 1)
+        {
+            _windowsize = 1;
+        }
+        else
+        {
+            _windowsize = windowsize;
+        }
         _params = _moihgp->getParams();
         _LBFGSB_param.m = 5;
         _LBFGSB_param.max_iterations = 5;

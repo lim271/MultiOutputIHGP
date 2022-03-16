@@ -23,13 +23,13 @@ public:
     {
         _dt = dt;
         _ss = StateSpace();
-        _nparam = _ss.getNumParam();
+        _num_param = _ss.getNumParam();
         _dim = _ss.getDim();
-        dS.assign(_nparam, 0.0);
-        dA.assign(_nparam, Eigen::MatrixXd(_dim, _dim).setZero());
-        dK.assign(_nparam, Eigen::MatrixXd(_dim, 1).setZero());
-        dAKHA.assign(_nparam, Eigen::MatrixXd(_dim, _dim).setZero());
-        HdA.assign(_nparam, Eigen::MatrixXd(_dim, 1).setZero());
+        dS.assign(_num_param, 0.0);
+        dA.assign(_num_param, Eigen::MatrixXd(_dim, _dim).setZero());
+        dK.assign(_num_param, Eigen::MatrixXd(_dim, 1).setZero());
+        dAKHA.assign(_num_param, Eigen::MatrixXd(_dim, _dim).setZero());
+        HdA.assign(_num_param, Eigen::MatrixXd(_dim, 1).setZero());
         update(_ss.getParams());
     }
 
@@ -40,7 +40,7 @@ public:
         {
             xnew = A * x;
             yhat = xnew(0, 0);
-            for (int idx = 0; idx < _nparam; idx++)
+            for (int idx = 0; idx < _num_param; idx++)
             {
                 dxnew[idx] = dA[idx] * x + A * dx[idx];
             }
@@ -49,7 +49,7 @@ public:
         {
             xnew = AKHA * x + K * y;
             yhat = xnew(0, 0);
-            for (int idx = 0; idx < _nparam; idx++)
+            for (int idx = 0; idx < _num_param; idx++)
             {
                 dxnew[idx] = dAKHA[idx] * x + AKHA * dx[idx] + dK[idx] * y;
             }
@@ -62,7 +62,7 @@ public:
         if (std::isnan(y))
         {
             xnew = A * x;
-            for (int idx = 0; idx < _nparam; idx++)
+            for (int idx = 0; idx < _num_param; idx++)
             {
                 dxnew[idx] = dA[idx] * x + A * dx[idx];
             }
@@ -70,7 +70,7 @@ public:
         else
         {
             xnew = AKHA * x + K * y;
-            for (int idx = 0; idx < _nparam; idx++)
+            for (int idx = 0; idx < _num_param; idx++)
             {
                 dxnew[idx] = dAKHA[idx] * x + AKHA * dx[idx] + dK[idx] * y;
             }
@@ -134,7 +134,7 @@ public:
         Eigen::MatrixXd AAKH = A - AK * _ss.H;
         Eigen::MatrixXd zeros(_dim, _dim);
         zeros.setZero();
-        for (int idx = 0; idx < _nparam; idx++)
+        for (int idx = 0; idx < _num_param; idx++)
         {
             Eigen::MatrixXd dAT(_dim, _dim);
             Eigen::MatrixXd dQ(_dim, _dim);
@@ -197,7 +197,7 @@ public:
                 dAKHA[idx] = dA[idx] -dK[idx] * _ss.H * A - K * _ss.H * dA[idx];
                 HdA[idx] = (_ss.H * dA[idx]).transpose();
             }
-        } // for (int idx = 0; idx < _nparam; idx++)
+        } // for (int idx = 0; idx < _num_param; idx++)
     } // void update(const Eigen::VectorXd& params)
 
 
@@ -213,7 +213,7 @@ public:
     {
         double v = y - (HA * x)(0, 0);
         double loss = 0.5 * (v * v / S + log(S));
-        for (int idx = 0; idx < _nparam; idx++)
+        for (int idx = 0; idx < _num_param; idx++)
         {
             double dv = (-HdA[idx] * x - dx[idx] * HA.transpose())(0, 0);
             grad[idx] = (v * dv - 0.5 * (v * v / S - 1) * dS[idx]) / S;
@@ -230,7 +230,7 @@ public:
 
     size_t getNumParam()
     {
-        return _nparam;
+        return _num_param;
     }
 
 
@@ -256,7 +256,7 @@ public:
 private:
 
     double _dt;
-    size_t _nparam;
+    size_t _num_param;
     size_t _dim;
     StateSpace _ss;
 

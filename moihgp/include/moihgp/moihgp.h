@@ -89,8 +89,8 @@ public:
             _IGPs[idx] = new IHGP<StateSpace>(dt);
         }
         _dim = _IGPs[0]->getDim();
-        _igp_nparam = _IGPs[0]->getNumParam();
-        _nparam = (num_output + 1 + _igp_nparam) * num_latent + 1;
+        _igp_num_param = _IGPs[0]->getNumParam();
+        _num_param = num_output * num_latent + num_latent + 1 + num_latent * _igp_num_param;
         dA.reserve(num_output * num_latent);
         int idx=0;
         for (int row=0; row < num_output; row++)
@@ -118,6 +118,14 @@ public:
         }
         S.setOnes(num_latent);
         sigma = 1e-1;
+        if (_num_latent < 2)
+        {
+            _threading = false;
+        }
+        else
+        {
+            _threading = threading;
+        }
     } // constructor MOIHGP
 
 
@@ -180,7 +188,7 @@ public:
                 args[idx].dx = dx[idx];
                 args[idx].xnew = Eigen::VectorXd(_dim);
                 args[idx].yhat = double(0.0);
-                args[idx].dxnew = std::vector<Eigen::VectorXd>(_igp_nparam, Eigen::VectorXd(_dim));
+                args[idx].dxnew = std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim));
                 pthread_create(&threads[idx], 0, &worker<IHGP<StateSpace>>, (void*)&args[idx]);
             }
             for (int idx=0; idx < _num_latent; idx++)
@@ -260,7 +268,7 @@ public:
                 args[idx].dx = dx[idx];
                 args[idx].xnew = Eigen::VectorXd(_dim);
                 args[idx].yhat = double(0.0);
-                args[idx].dxnew = std::vector<Eigen::VectorXd>(_igp_nparam, Eigen::VectorXd(_dim));
+                args[idx].dxnew = std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim));
                 pthread_create(&threads[idx], 0, &worker<IHGP<StateSpace>>, (void*)&args[idx]);
             }
             for (int idx=0; idx < _num_latent; idx++)
@@ -382,7 +390,7 @@ public:
                 args[idx].tid = idx;
                 args[idx].gp = _IGPs[idx];
                 args[idx].x = x[idx];
-                args[idx].xnew = std::vector<Eigen::VectorXd>(_igp_nparam, Eigen::VectorXd(_dim));
+                args[idx].xnew = Eigen::VectorXd(_dim);
                 args[idx].yhat = double(0.0);
                 assert(!pthread_create(&threads[idx], 0, &worker<IHGP<StateSpace>>, (void*)&args[idx]));
             }
@@ -430,9 +438,9 @@ public:
             U = svd.matrixU() * svd.matrixV().transpose();
         }
         S = params.block(_num_output * _num_latent, 0, _num_latent, 1);
-        sigma = params(_num_output * (_num_latent + 1));
-        Eigen::MatrixXd igp_params = params.tail(_igp_nparam * _num_latent);
-        igp_params.resize(_igp_nparam, _num_latent);
+        sigma = params(_num_output * _num_latent + _num_latent + 1);
+        Eigen::MatrixXd igp_params = params.tail(_igp_num_param * _num_latent);
+        igp_params.resize(_igp_num_param, _num_latent);
         for (int idx=0; idx < _num_latent; idx++)
         {
             Eigen::VectorXd tmp = igp_params.col(idx);
@@ -444,6 +452,7 @@ public:
     double negLogLikelihood(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, const std::vector<std::vector<Eigen::VectorXd> >& dx, Eigen::VectorXd &grad)
     {
         std::vector<int> idx_observed;
+        idx_observed.reserve(_num_output);
         for (int idx=0; idx < _num_output; idx++)
         {
             if (!std::isnan(y(idx)))
@@ -543,7 +552,7 @@ public:
             }
         }
         grad(sizeU + _num_latent) = 0.5 / sigma;
-        Eigen::MatrixXd igp_grad(_igp_nparam, _num_latent);
+        Eigen::MatrixXd igp_grad(_igp_num_param, _num_latent);
         if (_threading)
         {
             pthread_t* threads = new pthread_t[_num_latent];
@@ -557,7 +566,7 @@ public:
                 args[idx].y = Ty(idx);
                 args[idx].dx = dx[idx];
                 args[idx].loss = double(0.0);
-                args[idx].grad = Eigen::VectorXd(_igp_nparam);
+                args[idx].grad = Eigen::VectorXd(_igp_num_param);
                 pthread_create(&threads[idx], 0, &worker<IHGP<StateSpace>>, (void*)&args[idx]);
             }
             for (int idx=0; idx < _num_latent; idx++)
@@ -576,18 +585,21 @@ public:
         else{
             for (int idx=0; idx < _num_latent; idx++)
             {
-                Eigen::VectorXd g(_igp_nparam);
+                Eigen::VectorXd g(_igp_num_param);
                 _IGPs[idx]->negLogLikelihood(x[idx], Ty(idx), dx[idx], g);
                 igp_grad.col(idx) = g;
             }
         }
+        igp_grad.resize(igp_grad.size(), 1);
         grad.tail(igp_grad.size()) = igp_grad;
+        return loss;
     } // double negLogLikelihood(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, const std::vector<std::vector<Eigen::VectorXd> >& dx, Eigen::VectorXd &grad)
 
 
     double negLogLikelihood(Eigen::VectorXd *x, const Eigen::VectorXd &y)
     {
         std::vector<int> idx_observed;
+        idx_observed.reserve(_num_output);
         for (int idx=0; idx < _num_output; idx++)
         {
             if (!std::isnan(y(idx)))
@@ -654,6 +666,7 @@ public:
                 loss += _IGPs[idx]->negLogLikelihood(x[idx], Ty(idx));
             }
         }
+        return loss;
     } // double negLogLikelihood(Eigen::VectorXd *x, const Eigen::VectorXd &y)
 
 
@@ -677,25 +690,31 @@ public:
 
     size_t getNumParam()
     {
-        return _nparam;
+        return _num_param;
     }
 
 
     size_t getNumIGPParam()
     {
-        return _igp_nparam;
+        return _igp_num_param;
     }
 
 
     Eigen::VectorXd getParams()
     {
-        Eigen::VectorXd params(_nparam);
-        Eigen::MatrixXd igp_params(_dim, _igp_nparam);
-        for (int idx=0; idx < _igp_nparam; idx++)
+        Eigen::VectorXd params(_num_param);
+        Eigen::MatrixXd igp_params(_igp_num_param, _num_latent);
+        for (int idx=0; idx < _num_latent; idx++)
         {
             igp_params.col(idx) = _IGPs[idx]->getParams();
         }
-        params << U, S, sigma, igp_params.resize(_igp_nparam, 1);
+        igp_params.resize(_num_latent * _igp_num_param, 1);
+        Eigen::MatrixXd Uparam = U;
+        Uparam.resize(_num_output * _num_latent, 1);
+        params.head(_num_output * _num_latent) = Uparam;
+        params.block(_num_output * _num_latent, 0, _num_latent, 1) = S;
+        params(_num_output * _num_latent + _num_latent + 1) = sigma;
+        params.tail(_num_latent * _igp_num_param) = igp_params;
         return params;
     }
 
@@ -713,8 +732,8 @@ private:
     size_t _dim;
     size_t _num_output;
     size_t _num_latent;
-    size_t _nparam;
-    size_t _igp_nparam;
+    size_t _num_param;
+    size_t _igp_num_param;
 
 }; // class MOIHGP
 
