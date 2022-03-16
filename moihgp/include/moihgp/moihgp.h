@@ -493,6 +493,7 @@ public:
         }
         Eigen::MatrixXd svdU;
         Eigen::MatrixXd svdV;
+        Eigen::VectorXd svdS;
         Eigen::MatrixXd dAdT;
         if (U.size() > 16)
         {
@@ -502,6 +503,7 @@ public:
             );
             svdU = svd.matrixU();
             svdV = svd.matrixV();
+            svdS = svd.singularValues();
         }
         else
         {
@@ -511,11 +513,17 @@ public:
             );
             svdU = svd.matrixU();
             svdV = svd.matrixV();
+            svdS = svd.singularValues();
         }
         U = svdU * svdV.transpose();
         for (int idx1=0; idx1 < _num_output * _num_latent; idx1++)
         {
-            Eigen::MatrixXd dU = dA[idx1] - svdU * (svdU.transpose() * dA[idx1] * svdV).diagonal() * svdV.transpose();
+            Eigen::MatrixXd invS = (1.0 / svdS.array()).matrix().asDiagonal();
+            Eigen::MatrixXd Io(_num_output, _num_output);
+            Io.setIdentity();
+            Eigen::MatrixXd Il(_num_latent, _num_latent);
+            Il.setIdentity();
+            Eigen::MatrixXd dU = (Io + svdU * (invS - Il) * svdU.transpose()) * dA[idx1] * (Il + svdV * (invS - Il) * svdV.transpose());
             grad(idx1) = (-y.transpose() * U * dU.transpose() * y)(0, 0) / sigma;
             Eigen::MatrixXd dAdT = sqrtSinv * dU.transpose();
             for (int idx2=0; idx2 < _num_latent; idx2++)

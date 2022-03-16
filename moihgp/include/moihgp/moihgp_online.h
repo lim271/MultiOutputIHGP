@@ -29,9 +29,17 @@ public:
         _num_output = _gp->getNumOutput();
         _num_latent = _gp->getNumLatent();
         _gamma = gamma;
-        _windowsize = windowsize;
+        if (windowsize < 1)
+        {
+            _windowsize = 1;
+        }
+        else
+        {
+            _windowsize = windowsize;
+        }
         _x = std::vector<Eigen::VectorXd>(_num_latent, Eigen::VectorXd(_dim).setZero());
         _dx = std::vector<std::vector<Eigen::VectorXd>>(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
+        _ma.setZero(_num_output);
     }
 
 
@@ -58,7 +66,7 @@ public:
         std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
         for (std::list<Eigen::VectorXd>::iterator it = Y.begin(); it != Y.end(); it++)
         {
-            Eigen::VectorXd& y = *it;
+            Eigen::VectorXd y = *it - _ma;
             _gp->step(x, y, dx, xnew, dxnew);
             Eigen::VectorXd g(_num_param);
             loss += _gp->negLogLikelihood(x, y, dx, g);
@@ -77,11 +85,17 @@ public:
         {
             std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
             std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
-            _gp->step(_x, *Y.begin(), _dx, xnew, dxnew);
+            _gp->step(_x, *Y.begin() - _ma, _dx, xnew, dxnew);
             Y.pop_front();
             _x = xnew;
             _dx = dxnew;
         }
+        _ma.setZero();
+        for (std::list<Eigen::VectorXd>::iterator it = Y.begin(); it != Y.end(); it++)
+        {
+            _ma += *it;
+        }
+        _ma /= double(_windowsize);
     }
 
 
@@ -101,6 +115,7 @@ private:
     MOIHGP<StateSpace>* _gp;
     std::vector<Eigen::VectorXd> _x;
     std::vector<std::vector<Eigen::VectorXd>> _dx;
+    Eigen::VectorXd _ma;
 
 };
 
@@ -132,7 +147,7 @@ public:
         _params = _moihgp->getParams();
         _LBFGSB_param.m = 5;
         _LBFGSB_param.max_iterations = 5;
-        _LBFGSB_param.max_linesearch = 5;
+        _LBFGSB_param.max_linesearch = 10;
         _LBFGSB_param.max_step = 1.0;
         _solver = new LBFGSpp::LBFGSBSolver<double>(_LBFGSB_param);
         _obj = new Objective<StateSpace>(_moihgp, _gamma, _windowsize);
