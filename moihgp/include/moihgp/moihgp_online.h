@@ -33,7 +33,7 @@ public:
         _windowsize = windowsize;
         _x = std::vector<Eigen::VectorXd>(_num_latent, Eigen::VectorXd(_dim).setZero());
         _dx = std::vector<std::vector<Eigen::VectorXd>>(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
-        _ma.setZero(_num_output);
+        ma.setZero(_num_output);
     }
 
 
@@ -60,7 +60,7 @@ public:
         std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
         for (std::list<Eigen::VectorXd>::iterator it = Y.begin(); it != Y.end(); it++)
         {
-            Eigen::VectorXd y = *it - _ma;
+            Eigen::VectorXd y = *it - ma;
             _gp->step(x, y, dx, xnew, dxnew);
             Eigen::VectorXd g(_num_param);
             loss += _gp->negLogLikelihood(x, y, dx, g);
@@ -75,27 +75,28 @@ public:
     void push_back(Eigen::MatrixXd y)
     {
         Y.push_back(y);
+        ma.setZero();
+        for (std::list<Eigen::VectorXd>::iterator it = Y.begin(); it != Y.end(); it++)
+        {
+            ma += *it;
+        }
+        ma /= double(Y.size());
         while (Y.size() > _windowsize)
         {
             std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
             std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
-            _gp->step(_x, *Y.begin() - _ma, _dx, xnew, dxnew);
             Y.pop_front();
+            _gp->step(_x, *Y.begin() - ma, _dx, xnew, dxnew);
             _x = xnew;
             _dx = dxnew;
         }
-        _ma.setZero();
-        for (std::list<Eigen::VectorXd>::iterator it = Y.begin(); it != Y.end(); it++)
-        {
-            _ma += *it;
-        }
-        _ma /= double(_windowsize);
     }
 
 
     Eigen::VectorXd oldparams;
     LBFGSpp::BFGSMat<double, true> bfgs_mat;
     std::list<Eigen::VectorXd> Y;
+    Eigen::VectorXd ma;
 
 private:
 
@@ -109,7 +110,6 @@ private:
     MOIHGP<StateSpace>* _gp;
     std::vector<Eigen::VectorXd> _x;
     std::vector<std::vector<Eigen::VectorXd>> _dx;
-    Eigen::VectorXd _ma;
 
 };
 
@@ -166,8 +166,9 @@ public:
         Eigen::VectorXd yhat;
         std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
         std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
-        _moihgp->step(x, y, xnew, yhat);
         _obj->push_back(y);
+        _moihgp->step(x, y - _obj->ma, xnew, yhat);
+        yhat += _obj->ma;
         x = xnew;
         dx = dxnew;
         _obj->bfgs_mat = _solver->getBFGSMat();
