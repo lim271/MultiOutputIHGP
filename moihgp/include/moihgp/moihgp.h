@@ -84,7 +84,7 @@ public:
         _num_output = num_output;
         _num_latent = num_latent;
         _IGPs = std::vector<IHGP<StateSpace>*>(num_latent, nullptr);
-        for (int idx=0; idx < num_latent; idx++)
+        for (size_t idx=0; idx < num_latent; idx++)
         {
             _IGPs[idx] = new IHGP<StateSpace>(dt);
         }
@@ -93,9 +93,9 @@ public:
         _num_param = num_output * num_latent + num_latent + 1 + num_latent * _igp_num_param;
         dA.reserve(num_output * num_latent);
         int idx=0;
-        for (int row=0; row < num_output; row++)
+        for (size_t row=0; row < num_output; row++)
         {
-            for (int col=0; col < num_latent; col++)
+            for (size_t col=0; col < num_latent; col++)
             {
                 dA.push_back(Eigen::MatrixXd(num_output, num_latent).setZero());
                 dA[idx](row, col) = 1.0;
@@ -108,15 +108,19 @@ public:
         I.setIdentity();
         if (num_output * num_latent > 16)
         {
-            Eigen::BDCSVD<Eigen::MatrixXd> svd(I + 0.1 * rand, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            Eigen::BDCSVD<Eigen::MatrixXd> svd(I + 1e-2 * rand, Eigen::ComputeThinU | Eigen::ComputeThinV);
             U = svd.matrixU() * svd.matrixV().transpose();
         }
         else
         {
-            Eigen::JacobiSVD<Eigen::MatrixXd> svd(I + 0.1 * rand, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            Eigen::JacobiSVD<Eigen::MatrixXd> svd(I + 1e-2 * rand, Eigen::ComputeThinU | Eigen::ComputeThinV);
             U = svd.matrixU() * svd.matrixV().transpose();
         }
         S.setOnes(num_latent);
+        for (size_t idx=0; idx < _num_latent; idx++)
+        {
+            S(idx) = double(_num_latent + 1 - idx) / double(_num_latent);
+        }
         sigma = 1e-1;
         if (_num_latent < 2)
         {
@@ -131,7 +135,7 @@ public:
 
     ~MOIHGP()
     {
-        for(int idx=0; idx < _num_latent; idx++)
+        for (size_t idx=0; idx < _num_latent; idx++)
         {
             delete _IGPs[idx];
         }
@@ -142,7 +146,7 @@ public:
     {
         std::vector<int> idx_observed;
         idx_observed.reserve(_num_output);
-        for (int idx=0; idx < _num_output; idx++)
+        for (size_t idx=0; idx < _num_output; idx++)
         {
             if (!std::isnan(y(idx)))
             {
@@ -151,7 +155,7 @@ public:
         }
         Eigen::MatrixXd sqrtSinv(_num_latent, _num_latent);
         sqrtSinv.setZero();
-        for (int idx=0; idx < _num_latent; idx++)
+        for (size_t idx=0; idx < _num_latent; idx++)
         {
             sqrtSinv(idx, idx) = 1 / sqrt(S(idx));
         }
@@ -161,7 +165,7 @@ public:
         {
             Eigen::VectorXd y_observed(num_observed);
             Eigen::MatrixXd U0(num_observed, _num_latent);
-            for (int idx = 0; idx < num_observed; idx++)
+            for (size_t idx = 0; idx < num_observed; idx++)
             {
                 U0.row(idx) = U.row(idx_observed[idx]);
                 y_observed(idx) = y(idx_observed[idx]);
@@ -178,7 +182,7 @@ public:
         {
             pthread_t* threads = new pthread_t[_num_latent];
             Args<IHGP<StateSpace>>* args = new Args<IHGP<StateSpace>>[_num_latent];
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 args[idx].option = 0;
                 args[idx].tid = idx;
@@ -191,12 +195,12 @@ public:
                 args[idx].dxnew = std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim));
                 pthread_create(&threads[idx], 0, &worker<IHGP<StateSpace>>, (void*)&args[idx]);
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 void * ret;
                 pthread_join(threads[idx], &ret);
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 xnew[idx] = args[idx].xnew;
                 Tyhat(idx) = args[idx].yhat;
@@ -207,14 +211,14 @@ public:
         }
         else
         {
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 _IGPs[idx]->step(x[idx], Ty(idx), dx[idx], xnew[idx], Tyhat(idx), dxnew[idx]);
             }
         }
         Eigen::MatrixXd sqrtS(_num_latent, _num_latent);
         sqrtS.setZero();
-        for (int idx=0; idx < _num_latent; idx++) sqrtS(idx, idx) = sqrt(S(idx));
+        for (size_t idx=0; idx < _num_latent; idx++) sqrtS(idx, idx) = sqrt(S(idx));
         yhat = U * sqrtS * Tyhat;
     } // void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd& y, const std::vector<std::vector<Eigen::VectorXd>>& dx, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd& yhat, std::vector<std::vector<Eigen::VectorXd>>& dxnew)
 
@@ -223,7 +227,7 @@ public:
     {
         std::vector<int> idx_observed;
         idx_observed.reserve(_num_output);
-        for (int idx=0; idx < _num_output; idx++)
+        for (size_t idx=0; idx < _num_output; idx++)
         {
             if (!std::isnan(y(idx)))
             {
@@ -232,7 +236,7 @@ public:
         }
         Eigen::MatrixXd sqrtSinv(_num_latent, _num_latent);
         sqrtSinv.setZero();
-        for (int idx=0; idx < _num_latent; idx++)
+        for (size_t idx=0; idx < _num_latent; idx++)
         {
             sqrtSinv(idx, idx) = 1 / sqrt(S(idx));
         }
@@ -242,7 +246,7 @@ public:
         {
             Eigen::VectorXd y_observed(num_observed);
             Eigen::MatrixXd U0(num_observed, _num_latent);
-            for (int idx = 0; idx < num_observed; idx++)
+            for (size_t idx = 0; idx < num_observed; idx++)
             {
                 U0.row(idx) = U.row(idx_observed[idx]);
                 y_observed(idx) = y(idx_observed[idx]);
@@ -258,7 +262,7 @@ public:
         {
             pthread_t* threads = new pthread_t[_num_latent];
             Args<IHGP<StateSpace>>* args = new Args<IHGP<StateSpace>>[_num_latent];
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 args[idx].option = 1;
                 args[idx].tid = idx;
@@ -271,12 +275,12 @@ public:
                 args[idx].dxnew = std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim));
                 pthread_create(&threads[idx], 0, &worker<IHGP<StateSpace>>, (void*)&args[idx]);
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 void * ret;
                 pthread_join(threads[idx], &ret);
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 xnew[idx] = args[idx].xnew;
                 dxnew[idx] = args[idx].dxnew;
@@ -286,7 +290,7 @@ public:
         }
         else
         {
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 _IGPs[idx]->step(x[idx], Ty(idx), dx[idx], xnew[idx], dxnew[idx]);
             }
@@ -297,7 +301,7 @@ public:
     void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd &yhat)
     {
         std::vector<int> idx_observed;
-        for (int idx=0; idx < _num_output; idx++)
+        for (size_t idx=0; idx < _num_output; idx++)
         {
             if (!std::isnan(y(idx)))
             {
@@ -306,7 +310,7 @@ public:
         }
         Eigen::MatrixXd sqrtSinv(_num_latent, _num_latent);
         sqrtSinv.setZero();
-        for (int idx=0; idx < _num_latent; idx++)
+        for (size_t idx=0; idx < _num_latent; idx++)
         {
             sqrtSinv(idx, idx) = 1 / sqrt(S(idx));
         }
@@ -316,7 +320,7 @@ public:
         {
             Eigen::VectorXd y_observed(num_observed);
             Eigen::MatrixXd U0(num_observed, _num_latent);
-            for (int idx = 0; idx < num_observed; idx++)
+            for (size_t idx = 0; idx < num_observed; idx++)
             {
                 U0.row(idx) = U.row(idx_observed[idx]);
                 y_observed(idx) = y(idx_observed[idx]);
@@ -333,7 +337,7 @@ public:
         {
             pthread_t *threads = new pthread_t[_num_latent];
             Args<IHGP<StateSpace> > *args = new Args<IHGP<StateSpace> >[_num_latent];
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 args[idx].option = 2;
                 args[idx].tid = idx;
@@ -344,12 +348,12 @@ public:
                 args[idx].yhat = double(0.0);
                 pthread_create(&threads[idx], 0, &worker<IHGP<StateSpace>>, (void*)&args[idx]);
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 void* ret;
                 pthread_join(threads[idx], &ret);
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 xnew[idx] = args[idx].xnew;
                 Tyhat(idx) = args[idx].yhat;
@@ -359,14 +363,14 @@ public:
         }
         else
         {
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 _IGPs[idx]->step(x[idx], Ty(idx), xnew[idx], Tyhat(idx));
             }
         }
         Eigen::MatrixXd sqrtS(_num_latent, _num_latent);
         sqrtS.setZero();
-        for (int idx=0; idx < _num_latent; idx++) sqrtS(idx, idx) = sqrt(S(idx));
+        for (size_t idx=0; idx < _num_latent; idx++) sqrtS(idx, idx) = sqrt(S(idx));
         yhat = U * sqrtS * Tyhat;
     } // void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd &yhat)
 
@@ -375,7 +379,7 @@ public:
     {
         Eigen::MatrixXd sqrtSinv(_num_latent, _num_latent);
         sqrtSinv.setZero();
-        for (int idx=0; idx < _num_latent; idx++)
+        for (size_t idx=0; idx < _num_latent; idx++)
         {
             sqrtSinv(idx, idx) = 1 / sqrt(S(idx));
         }
@@ -384,7 +388,7 @@ public:
         {
             pthread_t* threads = new pthread_t[_num_latent];
             Args<IHGP<StateSpace> > *args = new Args<IHGP<StateSpace> >[_num_latent];
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 args[idx].option = 3;
                 args[idx].tid = idx;
@@ -394,12 +398,12 @@ public:
                 args[idx].yhat = double(0.0);
                 assert(!pthread_create(&threads[idx], 0, &worker<IHGP<StateSpace>>, (void*)&args[idx]));
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 void * ret;
                 pthread_join(threads[idx], &ret);
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 xnew[idx] = args[idx].xnew;
                 Tyhat(idx) = args[idx].yhat;
@@ -409,14 +413,14 @@ public:
         }
         else
         {
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 _IGPs[idx]->step(x[idx], xnew[idx], Tyhat(idx));
             }
         }
         Eigen::MatrixXd sqrtS(_num_latent, _num_latent);
         sqrtS.setZero();
-        for (int idx=0; idx < _num_latent; idx++) sqrtS(idx, idx) = sqrt(S(idx));
+        for (size_t idx=0; idx < _num_latent; idx++) sqrtS(idx, idx) = sqrt(S(idx));
         yhat = U * sqrtS * Tyhat;
     } // void step(std::vector<Eigen::VectorXd>& x, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd& yhat)
 
@@ -441,7 +445,7 @@ public:
         sigma = params(_num_output * _num_latent + _num_latent + 1);
         Eigen::MatrixXd igp_params = params.tail(_igp_num_param * _num_latent);
         igp_params.resize(_igp_num_param, _num_latent);
-        for (int idx=0; idx < _num_latent; idx++)
+        for (size_t idx=0; idx < _num_latent; idx++)
         {
             Eigen::VectorXd tmp = igp_params.col(idx);
             _IGPs[idx]->update(tmp);
@@ -453,7 +457,7 @@ public:
     {
         std::vector<int> idx_observed;
         idx_observed.reserve(_num_output);
-        for (int idx=0; idx < _num_output; idx++)
+        for (size_t idx=0; idx < _num_output; idx++)
         {
             if (!std::isnan(y(idx)))
             {
@@ -462,9 +466,13 @@ public:
         }
         Eigen::MatrixXd sqrtSinv(_num_latent, _num_latent);
         sqrtSinv.setZero();
-        for (int idx=0; idx < _num_latent; idx++)
+        Eigen::MatrixXd sqrtSinv3(_num_latent, _num_latent);
+        sqrtSinv3.setZero();
+        for (size_t idx=0; idx < _num_latent; idx++)
         {
-            sqrtSinv(idx, idx) = 1 / sqrt(S(idx));
+            double sqrtSi = sqrt(S(idx));
+            sqrtSinv(idx, idx) = 1 / sqrtSi;
+            sqrtSinv3(idx, idx) = 1 / sqrtSi / sqrtSi / sqrtSi;
         }
         Eigen::VectorXd Ty;
         size_t num_observed = idx_observed.size();
@@ -472,7 +480,7 @@ public:
         {
             Eigen::VectorXd y_observed(num_observed);
             Eigen::MatrixXd U0(num_observed, _num_latent);
-            for (int idx = 0; idx < num_observed; idx++)
+            for (size_t idx = 0; idx < num_observed; idx++)
             {
                 U0.row(idx) = U.row(idx_observed[idx]);
                 y_observed(idx) = y(idx_observed[idx]);
@@ -486,19 +494,17 @@ public:
         }
         Eigen::MatrixXd I(_num_output, _num_output);
         I.setIdentity();
-        for (int idx=0; idx < _num_latent; idx++)
-        {
-            sqrtSinv(idx, idx) = 1 / sqrt(S(idx));
-        }
-        double loss = 0.5 * log(S.sum()) + 0.5 * (_num_output - _num_latent) * log(sigma) + 0.5 / sigma * ((I - U * U.transpose()) * y).norm();
+        double y_UUTy = ((I - U * U.transpose()) * y).norm();
+        double m_n = std::max(double(_num_output) - double(_num_latent), 0.0);
+        double loss = 0.5 * log(S.sum()) + 0.5 * m_n * log(sigma) + 0.5 * y_UUTy / sigma;
         Eigen::VectorXd pv(_num_latent);
-        for (int idx=0; idx < _num_latent; idx++)
+        for (size_t idx=0; idx < _num_latent; idx++)
         {
             Eigen::MatrixXd HA = _IGPs[idx]->HA;
             Eigen::MatrixXd xi = x[idx];
             Eigen::MatrixXd HAx = HA * xi;
             double vi = y(idx) - HAx(0, 0);
-            pv(idx) = vi * (1 - (_IGPs[idx]->HA * _IGPs[idx]->K)(0, 0)) / _IGPs[idx]->S;
+            pv(idx) = vi * (1 - (_IGPs[idx]->HA * _IGPs[idx]->K)(0, 0)) / _IGPs[idx]->S(0, 0);
         }
         Eigen::MatrixXd svdU;
         Eigen::MatrixXd svdV;
@@ -525,7 +531,7 @@ public:
             svdS = svd.singularValues();
         }
         U = svdU * svdV.transpose();
-        for (int idx1=0; idx1 < _num_output * _num_latent; idx1++)
+        for (size_t idx1=0; idx1 < _num_output * _num_latent; idx1++)
         {
             Eigen::MatrixXd invS = (1.0 / svdS.array()).matrix().asDiagonal();
             Eigen::MatrixXd Io(_num_output, _num_output);
@@ -535,29 +541,29 @@ public:
             Eigen::MatrixXd dU = (Io + svdU * (invS - Il) * svdU.transpose()) * dA[idx1] * (Il + svdV * (invS - Il) * svdV.transpose());
             grad(idx1) = (-y.transpose() * U * dU.transpose() * y)(0, 0) / sigma;
             Eigen::MatrixXd dAdT = sqrtSinv * dU.transpose();
-            for (int idx2=0; idx2 < _num_latent; idx2++)
+            for (size_t idx2=0; idx2 < _num_latent; idx2++)
             {
                 grad(idx1) += (pv(idx2) * dAdT.row(idx2) * y)(0, 0);
             }
         }
         int sizeU = _num_output * _num_latent;
-        for (int idx1=0; idx1 < _num_latent; idx1++) {
+        for (size_t idx1=0; idx1 < _num_latent; idx1++) {
             grad(sizeU + idx1) = 0.5 / S(idx1);
             Eigen::MatrixXd dS(_num_latent, _num_latent);
             dS.setZero();
             dS(idx1, idx1) = 1.0;
-            Eigen::MatrixXd dAdT = -sqrtSinv * sqrtSinv * sqrtSinv * dS * U.transpose() / 2.0;
-            for (int idx2=0; idx2 < _num_latent; idx2++) {
+            Eigen::MatrixXd dAdT = -0.5 * sqrtSinv3 * dS * U.transpose();
+            for (size_t idx2=0; idx2 < _num_latent; idx2++) {
                 grad(sizeU + idx1) += (pv(idx2) * dAdT.row(idx2) * y)(0, 0);
             }
         }
-        grad(sizeU + _num_latent) = 0.5 / sigma;
+        grad(sizeU + _num_latent) = 0.5 * (m_n - y_UUTy / sigma) / sigma;
         Eigen::MatrixXd igp_grad(_igp_num_param, _num_latent);
         if (_threading)
         {
             pthread_t* threads = new pthread_t[_num_latent];
             Args<IHGP<StateSpace> > *args = new Args<IHGP<StateSpace> >[_num_latent];
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 args[idx].option = 4;
                 args[idx].tid = idx;
@@ -569,25 +575,31 @@ public:
                 args[idx].grad = Eigen::VectorXd(_igp_num_param);
                 pthread_create(&threads[idx], 0, &worker<IHGP<StateSpace>>, (void*)&args[idx]);
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 void * ret;
                 pthread_join(threads[idx], &ret);
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 loss += args[idx].loss;
                 igp_grad.col(idx) = args[idx].grad;
+                double dn = args[idx].grad(_igp_num_param - 1);
+                grad(sizeU + idx) -= dn * sigma / S(idx) / S(idx);
+                grad(sizeU + _num_latent) += dn / S(idx);
             }
             delete [] threads;
             delete [] args;
         }
         else{
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 Eigen::VectorXd g(_igp_num_param);
                 _IGPs[idx]->negLogLikelihood(x[idx], Ty(idx), dx[idx], g);
                 igp_grad.col(idx) = g;
+                double dn = g(_igp_num_param - 1);
+                grad(sizeU + idx) -= dn * sigma / S(idx) / S(idx);
+                grad(sizeU + _num_latent) += dn / S(idx);
             }
         }
         igp_grad.resize(igp_grad.size(), 1);
@@ -600,7 +612,7 @@ public:
     {
         std::vector<int> idx_observed;
         idx_observed.reserve(_num_output);
-        for (int idx=0; idx < _num_output; idx++)
+        for (size_t idx=0; idx < _num_output; idx++)
         {
             if (!std::isnan(y(idx)))
             {
@@ -609,7 +621,7 @@ public:
         }
         Eigen::MatrixXd sqrtSinv(_num_latent, _num_latent);
         sqrtSinv.setZero();
-        for (int idx=0; idx < _num_latent; idx++)
+        for (size_t idx=0; idx < _num_latent; idx++)
         {
             sqrtSinv(idx, idx) = 1 / sqrt(S(idx));
         }
@@ -619,7 +631,7 @@ public:
         {
             Eigen::VectorXd y_observed(num_observed);
             Eigen::MatrixXd U0(num_observed, _num_latent);
-            for (int idx = 0; idx < num_observed; idx++)
+            for (size_t idx = 0; idx < num_observed; idx++)
             {
                 U0.row(idx) = U.row(idx_observed[idx]);
                 y_observed(idx) = y(idx_observed[idx]);
@@ -637,7 +649,7 @@ public:
         {
             pthread_t* threads = new pthread_t[_num_latent];
             Args<IHGP<StateSpace> > *args = new Args<IHGP<StateSpace> >[_num_latent];
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 args[idx].option = 5;
                 args[idx].tid = idx;
@@ -647,12 +659,12 @@ public:
                 args[idx].loss = double(0.0);
                 pthread_create(&threads[idx], 0, &worker<IHGP<StateSpace>>, (void*)&args[idx]);
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 void * ret;
                 pthread_join(threads[idx], &ret);
             }
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 loss += args[idx].loss;
             }
@@ -661,7 +673,7 @@ public:
         }
         else
         {
-            for (int idx=0; idx < _num_latent; idx++)
+            for (size_t idx=0; idx < _num_latent; idx++)
             {
                 loss += _IGPs[idx]->negLogLikelihood(x[idx], Ty(idx));
             }
@@ -704,7 +716,7 @@ public:
     {
         Eigen::VectorXd params(_num_param);
         Eigen::MatrixXd igp_params(_igp_num_param, _num_latent);
-        for (int idx=0; idx < _num_latent; idx++)
+        for (size_t idx=0; idx < _num_latent; idx++)
         {
             igp_params.col(idx) = _IGPs[idx]->getParams();
         }

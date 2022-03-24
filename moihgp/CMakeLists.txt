@@ -40,15 +40,23 @@ include_directories(SYSTEM)
 
 ## Build additional executables
 
-add_executable(example_online_learning examples/example_online_learning.cpp)
+add_executable(example_online_learning cpp_examples/example_online_learning.cpp)
 target_link_libraries(example_online_learning
   ${EXTERNAL_LIBS}
   Eigen3::Eigen
   pthread
 )
 
-add_executable(example_regression examples/example_regression.cpp)
+add_executable(example_regression cpp_examples/example_regression.cpp)
 target_link_libraries(example_regression
+  ${EXTERNAL_LIBS}
+  Eigen3::Eigen
+  pthread
+)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+add_library(moihgp MODULE lib/moihgp.cpp)
+target_link_libraries(moihgp
   ${EXTERNAL_LIBS}
   Eigen3::Eigen
   pthread

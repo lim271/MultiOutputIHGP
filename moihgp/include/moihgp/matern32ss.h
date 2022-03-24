@@ -21,15 +21,16 @@ public:
         Pinf = Eigen::MatrixXd(_dim, _dim).setZero();
         H = Eigen::MatrixXd(1, _dim);
         H << 1.0, 0.0;
+        R = Eigen::MatrixXd(1, 1).setZero();
         dF.assign(_num_param, Eigen::MatrixXd(_dim, _dim).setZero());
         dPinf.reserve(_num_param);
         dPinf.push_back(Eigen::MatrixXd(_dim, _dim).setIdentity());
         dPinf.push_back(Eigen::MatrixXd(_dim, _dim).setZero());
         dPinf.push_back(Eigen::MatrixXd(_dim, _dim).setZero());
         dR.reserve(_num_param);
-        dR.push_back(0.0);
-        dR.push_back(0.0);
-        dR.push_back(1.0);
+        dR.push_back(Eigen::MatrixXd(1, 1).setZero());
+        dR.push_back(Eigen::MatrixXd(1, 1).setZero());
+        dR.push_back(Eigen::MatrixXd(1, 1).setOnes());
         Eigen::VectorXd params(_num_param);
         params << 1.0, 1.0, 0.1;
         update(params);
@@ -47,7 +48,7 @@ public:
         F(1, 1) = -2.0 * lam;
         Pinf(0, 0) = magnitude;
         Pinf(1, 1) = magnitude * lam2;
-        R = params(2);
+        R(0, 0) = params(2);
 
         // dF / d(lengthscale)
         dF[1](1, 0) = len3;
@@ -84,10 +85,10 @@ public:
     Eigen::MatrixXd F;
     Eigen::MatrixXd Pinf;
     Eigen::MatrixXd H;
-    double R;
+    Eigen::MatrixXd R;
     std::vector<Eigen::MatrixXd> dF;
     std::vector<Eigen::MatrixXd> dPinf;
-    std::vector<double> dR;
+    std::vector<Eigen::MatrixXd> dR;
 
 private:
 

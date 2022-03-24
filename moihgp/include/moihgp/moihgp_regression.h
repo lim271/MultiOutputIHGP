@@ -1,5 +1,5 @@
-#ifndef _MOIHGP_ONLINE_H_
-#define _MOIHGP_ONLINE_H_
+#ifndef _MOIHGP_REGRESSION_H_
+#define _MOIHGP_REGRESSION_H_
 
 #include <cstdlib>
 #include <vector>
@@ -15,11 +15,11 @@ namespace moihgp {
 
 
 template <typename StateSpace>
-class Objective {
+class RegressionObjective {
 
 public:
 
-    Objective(const size_t& num_data, MOIHGP<StateSpace>* gp)
+    RegressionObjective(const size_t& num_data, MOIHGP<StateSpace>* gp)
     {
         _gp = gp;
         _dim = _gp->getIGPDim();
@@ -95,7 +95,7 @@ public:
         _ub.tail(_igp_num_param * _num_latent + _num_latent + 1).setConstant(10.0);
         _params = _moihgp->getParams();
         _solver = new LBFGSpp::LBFGSBSolver<double>(_LBFGSB_param);
-        _obj = new Objective<StateSpace>(_num_data, _moihgp);
+        _obj = new RegressionObjective<StateSpace>(_num_data, _moihgp);
     }
 
     ~MOIHGPRegression()
@@ -136,6 +136,42 @@ public:
         return params;
     }
 
+
+    size_t getNumParam()
+    {
+        return _num_param;
+    }
+
+
+    size_t getNumOutput()
+    {
+        return _num_output;
+    }
+
+
+    size_t getNumLatent()
+    {
+        return _num_latent;
+    }
+
+
+    size_t getNumIGPParam()
+    {
+        return _igp_num_param;
+    }
+
+
+    size_t getIGPDim()
+    {
+        return _dim;
+    }
+
+
+    size_t getNumData()
+    {
+        return _num_data;
+    }
+
 private:
 
     MOIHGP<StateSpace>* _moihgp;
@@ -152,7 +188,7 @@ private:
     LBFGSpp::LBFGSBSolver<double>* _solver;
     Eigen::VectorXd _lb;
     Eigen::VectorXd _ub;
-    Objective<StateSpace>* _obj;
+    RegressionObjective<StateSpace>* _obj;
 
 };
 

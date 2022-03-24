@@ -1,9 +1,9 @@
 #include <cstdlib>
 #include <list>
 #include <Eigen/Core>
-#include <iostream>
 #include <moihgp/moihgp_online.h>
 #include <moihgp/matern32ss.h>
+#include <iostream>
 #include <time.h>
 
 
@@ -12,10 +12,10 @@ int main()
 {
 
     double dt = 0.1;
-    double gamma = 0.9;
+    double gamma = 0.0;
     size_t num_output = 2;
     size_t num_latent = 1;
-    size_t windowsize = 3;
+    size_t windowsize = 1;
     bool threading = false;
     Eigen::MatrixXd H(2, 2);
     H << 0.7, 0.3, -0.3, 0.7;

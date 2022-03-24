@@ -13,7 +13,7 @@ cmake ..
 make
 ```
 
-## Examples
+## C++ Examples
 - Regression example
 ```
 cd moihgp/build
@@ -23,6 +23,12 @@ cd moihgp/build
 ```
 cd moihgp/build
 ./example_online_learning
+```
+
+## Python3 Example
+- Online learning example
+```
+python3 example.py
 ```
 
 ## Dependencies

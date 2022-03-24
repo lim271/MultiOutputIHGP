@@ -25,7 +25,7 @@ public:
         _ss = StateSpace();
         _num_param = _ss.getNumParam();
         _dim = _ss.getDim();
-        dS.assign(_num_param, 0.0);
+        dS.assign(_num_param, Eigen::MatrixXd(1, 1).setZero());
         dA.assign(_num_param, Eigen::MatrixXd(_dim, _dim).setZero());
         dK.assign(_num_param, Eigen::MatrixXd(_dim, 1).setZero());
         dAKHA.assign(_num_param, Eigen::MatrixXd(_dim, _dim).setZero());
@@ -40,7 +40,7 @@ public:
         {
             xnew = A * x;
             yhat = xnew(0, 0);
-            for (int idx = 0; idx < _num_param; idx++)
+            for (size_t idx = 0; idx < _num_param; idx++)
             {
                 dxnew[idx] = dA[idx] * x + A * dx[idx];
             }
@@ -49,7 +49,7 @@ public:
         {
             xnew = AKHA * x + K * y;
             yhat = xnew(0, 0);
-            for (int idx = 0; idx < _num_param; idx++)
+            for (size_t idx = 0; idx < _num_param; idx++)
             {
                 dxnew[idx] = dAKHA[idx] * x + AKHA * dx[idx] + dK[idx] * y;
             }
@@ -62,7 +62,7 @@ public:
         if (std::isnan(y))
         {
             xnew = A * x;
-            for (int idx = 0; idx < _num_param; idx++)
+            for (size_t idx = 0; idx < _num_param; idx++)
             {
                 dxnew[idx] = dA[idx] * x + A * dx[idx];
             }
@@ -70,7 +70,7 @@ public:
         else
         {
             xnew = AKHA * x + K * y;
-            for (int idx = 0; idx < _num_param; idx++)
+            for (size_t idx = 0; idx < _num_param; idx++)
             {
                 dxnew[idx] = dAKHA[idx] * x + AKHA * dx[idx] + dK[idx] * y;
             }
@@ -121,20 +121,19 @@ public:
         A = (_dt * _ss.F).exp();    // c2d
         Q = _ss.Pinf - A * _ss.Pinf * A.transpose();
         Eigen::MatrixXd PP(_dim, _dim);
-        Eigen::MatrixXd R(1, 1);
-        R(0, 0) = _ss.R;
-        DARE(A, _ss.H.transpose(), Q, R, PP);
-        S = PP(0, 0) + _ss.R;    // H*PP*H.T + R
-        K = PP.col(0) / S;    // PP*H.T*inv(S)
+        Eigen::MatrixXd HT = _ss.H.transpose();
+        DARE(A, HT, Q, _ss.R, PP);
+        S = _ss.H * PP * HT + _ss.R;    // H*PP*H.T + R
+        K = PP * HT / S(0, 0);    // PP*H.T*inv(S)
         PF = PP - K * _ss.H * PP;
-        HA = A.row(0);    // (H*A).T
+        HA = _ss.H * A;
         AKHA = A - K * HA;    // A-K*H*A
         Eigen::MatrixXd AT = A.transpose();
         Eigen::MatrixXd AK = A * K;
         Eigen::MatrixXd AAKH = A - AK * _ss.H;
         Eigen::MatrixXd zeros(_dim, _dim);
         zeros.setZero();
-        for (int idx = 0; idx < _num_param; idx++)
+        for (size_t idx = 0; idx < _num_param; idx++)
         {
             Eigen::MatrixXd dAT(_dim, _dim);
             Eigen::MatrixXd dQ(_dim, _dim);
@@ -150,7 +149,7 @@ public:
                 {
                     dQ = _ss.dPinf[idx] - A * _ss.dPinf[idx] * AT;
                 }
-                if (_ss.dR[idx]==0.0)
+                if (_ss.dR[idx](0, 0)==0.0)
                 {
                     QLyap = dQ;
                 }
@@ -174,19 +173,19 @@ public:
                 {
                     dQ = _ss.dPinf[idx] - dA[idx] * _ss.Pinf * AT - A * _ss.dPinf[idx] * AT - A * _ss.Pinf * dAT;
                 }
-                if (_ss.dR[idx]==0.0)
+                if (_ss.dR[idx](0, 0)==0.0)
                 {
-                    QLyap = dA[idx] * PP * AT + A * PP * dAT - dA[idx] * PP * _ss.H.transpose() * AK.transpose() - AK * _ss.H * PP * dAT + dQ;
+                    QLyap = dA[idx] * PP * AT + A * PP * dAT - dA[idx] * PP * HT * AK.transpose() - AK * _ss.H * PP * dAT + dQ;
                 }
                 else
                 {
-                    QLyap = dA[idx] * PP * AT + A * PP * dAT - dA[idx] * PP * _ss.H.transpose() * AK.transpose() - AK * _ss.H * PP * dAT + AK * AK.transpose() * _ss.dR[idx] + dQ;
+                    QLyap = dA[idx] * PP * AT + A * PP * dAT - dA[idx] * PP * HT * AK.transpose() - AK * _ss.H * PP * dAT + AK * AK.transpose() * _ss.dR[idx] + dQ;
                 }
             }
             Eigen::MatrixXd dPP(_dim, _dim);
             DLyap(AAKH, QLyap, dPP);
-            dS[idx] = dPP(0, 0) + _ss.dR[idx];
-            dK[idx] = dPP.col(0) / S - PP.col(0) * dS[idx] / S / S;
+            dS[idx] = _ss.H * dPP * HT + _ss.dR[idx];
+            dK[idx] = (dPP - PP * dS[idx](0, 0) / S(0, 0)) * HT / S(0, 0);
             if (_ss.dF[idx]==zeros)
             {
                 dAKHA[idx] = -dK[idx] * _ss.H * A;
@@ -197,14 +196,14 @@ public:
                 dAKHA[idx] = dA[idx] -dK[idx] * _ss.H * A - K * _ss.H * dA[idx];
                 HdA[idx] = (_ss.H * dA[idx]).transpose();
             }
-        } // for (int idx = 0; idx < _num_param; idx++)
+        } // for (size_t idx = 0; idx < _num_param; idx++)
     } // void update(const Eigen::VectorXd& params)
 
 
     double negLogLikelihood(const Eigen::VectorXd& x, const double& y)
     {
         double v = y - (HA * x)(0, 0);
-        double loss = 0.5 * (v * v / S + log(S));
+        double loss = 0.5 * (v * v / S(0, 0) + log(S(0, 0)));
         return loss;
     }
 
@@ -212,11 +211,11 @@ public:
     double negLogLikelihood(const Eigen::VectorXd& x, const double& y, const std::vector<Eigen::VectorXd>& dx, Eigen::VectorXd& grad)
     {
         double v = y - (HA * x)(0, 0);
-        double loss = 0.5 * (v * v / S + log(S));
-        for (int idx = 0; idx < _num_param; idx++)
+        double loss = 0.5 * (v * v / S(0, 0) + log(S(0, 0)));
+        for (size_t idx = 0; idx < _num_param; idx++)
         {
-            double dv = (-HdA[idx] * x - dx[idx] * HA.transpose())(0, 0);
-            grad[idx] = (v * dv - 0.5 * (v * v / S - 1) * dS[idx]) / S;
+            double dv = (-HdA[idx] * x - HA * dx[idx])(0, 0);
+            grad[idx] = (v * dv - 0.5 * (v * v / S(0, 0) - 1) * dS[idx](0, 0)) / S(0, 0);
         }
         return loss;
     }
@@ -240,14 +239,14 @@ public:
     }
 
 
-    double S;
     Eigen::MatrixXd A;
     Eigen::MatrixXd Q;
     Eigen::MatrixXd K;
+    Eigen::MatrixXd S;
     Eigen::MatrixXd PF;
     Eigen::MatrixXd HA;
     Eigen::MatrixXd AKHA;
-    std::vector<double> dS;
+    std::vector<Eigen::MatrixXd> dS;
     std::vector<Eigen::MatrixXd> dA;
     std::vector<Eigen::MatrixXd> dK;
     std::vector<Eigen::MatrixXd> dAKHA;

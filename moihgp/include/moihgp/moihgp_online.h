@@ -16,11 +16,11 @@ namespace moihgp {
 
 
 template <typename StateSpace>
-class Objective {
+class OnlineObjective {
 
 public:
 
-    Objective(MOIHGP<StateSpace>* gp, const double& gamma, const size_t& windowsize)
+    OnlineObjective(MOIHGP<StateSpace>* gp, const double& gamma, const size_t& windowsize)
     {
         _gp = gp;
         _dim = _gp->getIGPDim();
@@ -75,7 +75,7 @@ public:
     void push_back(Eigen::MatrixXd y)
     {
         Y.push_back(y);
-        ma.setZero();
+        ma.setZero(_num_output);
         for (std::list<Eigen::VectorXd>::iterator it = Y.begin(); it != Y.end(); it++)
         {
             ma += *it;
@@ -86,7 +86,7 @@ public:
             std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
             std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
             Y.pop_front();
-            _gp->step(_x, *Y.begin() - ma, _dx, xnew, dxnew);
+            _gp->step(_x, Y.front() - ma, _dx, xnew, dxnew);
             _x = xnew;
             _dx = dxnew;
         }
@@ -147,10 +147,11 @@ public:
         }
         _params = _moihgp->getParams();
         _LBFGSB_param.m = 5;
-        _LBFGSB_param.max_iterations = 5;
-        _LBFGSB_param.max_linesearch = 10;
+        _LBFGSB_param.max_iterations = 10;
+        _LBFGSB_param.max_linesearch = 20;
+        _LBFGSB_param.max_step = 1e-1;
         _solver = new LBFGSpp::LBFGSBSolver<double>(_LBFGSB_param);
-        _obj = new Objective<StateSpace>(_moihgp, _gamma, _windowsize);
+        _obj = new OnlineObjective<StateSpace>(_moihgp, _gamma, _windowsize);
     }
 
 
@@ -162,7 +163,7 @@ public:
     }
 
 
-    Eigen::MatrixXd step(const Eigen::VectorXd& y) {
+    Eigen::VectorXd step(const Eigen::VectorXd& y) {
         Eigen::VectorXd yhat;
         std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
         std::vector<std::vector<Eigen::VectorXd> > dxnew(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
@@ -176,6 +177,49 @@ public:
         double fx;
         int niter = _solver->minimize(*_obj, _params, fx, _lb, _ub);
         return yhat;
+    }
+
+
+    Eigen::VectorXd getParams()
+    {
+        Eigen::VectorXd params = _moihgp->getParams();
+        return params;
+    }
+
+
+    size_t getNumParam()
+    {
+        return _num_param;
+    }
+
+
+    size_t getNumOutput()
+    {
+        return _num_output;
+    }
+
+
+    size_t getNumLatent()
+    {
+        return _num_latent;
+    }
+
+
+    size_t getNumIGPParam()
+    {
+        return _igp_num_param;
+    }
+
+
+    size_t getIGPDim()
+    {
+        return _dim;
+    }
+
+
+    size_t getWindowsize()
+    {
+        return _windowsize;
     }
 
 
@@ -199,7 +243,7 @@ private:
     LBFGSpp::LBFGSBSolver<double>* _solver;
     Eigen::VectorXd _lb;
     Eigen::VectorXd _ub;
-    Objective<StateSpace>* _obj;
+    OnlineObjective<StateSpace>* _obj;
 
 };
 

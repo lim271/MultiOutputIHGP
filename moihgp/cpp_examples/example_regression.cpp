@@ -1,9 +1,9 @@
 #include <cstdlib>
 #include <list>
 #include <Eigen/Core>
-#include <iostream>
 #include <moihgp/moihgp_regression.h>
 #include <moihgp/matern32ss.h>
+#include <iostream>
 #include <time.h>
 
 
@@ -12,7 +12,6 @@ int main()
 {
 
     double dt = 0.1;
-    double gamma = 0.9;
     size_t num_output = 2;
     size_t num_latent = 1;
     bool threading = true;
