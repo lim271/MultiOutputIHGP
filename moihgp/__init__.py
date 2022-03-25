@@ -1,3 +1,4 @@
+import os.path
 import ctypes
 import numpy as np
 
@@ -5,7 +6,7 @@ import numpy as np
 
 class MOIHGPOnlineLearning(object):
 
-    def __init__(self, dt, num_output, num_latent, gamma=0.9, l1_reg=1.0, windowsize=1, threading=False, kernel="Matern32"):
+    def __init__(self, dt, num_output, num_latent, gamma=0.9, l1_reg=1.0, windowsize=1, threading=False, kernel="Matern32", libpath=None):
         self.dt = dt
         self.num_output = num_output
         self.num_latent = num_latent
@@ -13,7 +14,13 @@ class MOIHGPOnlineLearning(object):
         self.l1_reg = l1_reg
         self.windowsize = windowsize
         self.threading = threading
-        self.lib = ctypes.cdll.LoadLibrary("./moihgp/build/libmoihgp.so")
+        if libpath is None:
+            libpath = os.path.dirname(__file__)
+        lib = os.path.join(libpath, "build/libmoihgp_ctypes.so")
+        if os.path.exists(lib):
+            self.lib = ctypes.cdll.LoadLibrary(lib)
+        else:
+            raise FileNotFoundError("libmoihgp_ctypes.so not found.")
         if kernel=="Matern32":
             self.lib.online32_new.restype = ctypes.c_void_p
             self.__obj = self.lib.online32_new(

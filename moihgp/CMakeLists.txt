@@ -55,8 +55,8 @@ target_link_libraries(example_regression
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
-add_library(moihgp MODULE lib/moihgp.cpp)
-target_link_libraries(moihgp
+add_library(moihgp_ctypes MODULE src/moihgp_ctypes.cpp)
+target_link_libraries(moihgp_ctypes
   ${EXTERNAL_LIBS}
   Eigen3::Eigen
   pthread
