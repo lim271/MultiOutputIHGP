@@ -94,6 +94,12 @@ public:
         _lb.tail(_igp_num_param * _num_latent + _num_latent + 1).setConstant(1e-4);
         _ub.tail(_igp_num_param * _num_latent + _num_latent + 1).setConstant(10.0);
         _params = _moihgp->getParams();
+        _LBFGSB_param.max_iterations = 1000;
+        _LBFGSB_param.m = 10;
+        _LBFGSB_param.max_linesearch = 20;
+        _LBFGSB_param.ftol = 1e-8;
+        _LBFGSB_param.epsilon = 1e-8;
+        _LBFGSB_param.epsilon_rel = 1e-8;
         _solver = new LBFGSpp::LBFGSBSolver<double>(_LBFGSB_param);
         _obj = new RegressionObjective<StateSpace>(_num_data, _moihgp);
     }
@@ -109,9 +115,9 @@ public:
     int fit(const std::vector<Eigen::VectorXd>& Y) {
         _obj->Y = Y;
         double fx;
-        int niter = _solver->minimize(*_obj, _params, fx, _lb, _ub);
+        int num_iter = _solver->minimize(*_obj, _params, fx, _lb, _ub);
         _params = _moihgp->getParams();
-        return niter;
+        return num_iter;
     }
 
 

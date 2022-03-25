@@ -106,7 +106,7 @@ void regression32_fit(MOIHGPRegression<Matern32StateSpace>* gp, double* y, doubl
     {
         _y.push_back(Eigen::Map<Eigen::VectorXd>(&y[idx * num_output], num_output, 1));
     }
-    int niter = gp->fit(_y);
+    gp->fit(_y);
 }
 
 void regression32_getParams(MOIHGPRegression<Matern32StateSpace>* gp, double* params)
@@ -145,7 +145,7 @@ void regression52_fit(MOIHGPRegression<Matern52StateSpace>* gp, double* y, doubl
     {
         _y.push_back(Eigen::Map<Eigen::VectorXd>(&y[idx * num_output], num_output, 1));
     }
-    int niter = gp->fit(_y);
+    gp->fit(_y);
 }
 
 void regression52_getParams(MOIHGPRegression<Matern52StateSpace>* gp, double* params)

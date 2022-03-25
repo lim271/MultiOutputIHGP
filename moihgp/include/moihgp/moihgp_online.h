@@ -147,9 +147,12 @@ public:
         }
         _params = _moihgp->getParams();
         _LBFGSB_param.m = 5;
-        _LBFGSB_param.max_iterations = 10;
+        _LBFGSB_param.max_iterations = 5;
         _LBFGSB_param.max_linesearch = 20;
         _LBFGSB_param.max_step = 1e-1;
+        _LBFGSB_param.ftol = 1e-8;
+        _LBFGSB_param.epsilon = 1e-8;
+        _LBFGSB_param.epsilon_rel = 1e-8;
         _solver = new LBFGSpp::LBFGSBSolver<double>(_LBFGSB_param);
         _obj = new OnlineObjective<StateSpace>(_moihgp, _gamma, _windowsize);
     }
@@ -175,7 +178,7 @@ public:
         _obj->bfgs_mat = _solver->getBFGSMat();
         _obj->oldparams = _params;
         double fx;
-        int niter = _solver->minimize(*_obj, _params, fx, _lb, _ub);
+        _solver->minimize(*_obj, _params, fx, _lb, _ub);
         return yhat;
     }
 

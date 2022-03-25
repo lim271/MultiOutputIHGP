@@ -120,6 +120,7 @@ public:
         _ss.update(params);
         A = (_dt * _ss.F).exp();    // c2d
         Q = _ss.Pinf - A * _ss.Pinf * A.transpose();
+        Q = (Q + Q.transpose()) / 2.0;
         Eigen::MatrixXd PP(_dim, _dim);
         Eigen::MatrixXd HT = _ss.H.transpose();
         DARE(A, HT, Q, _ss.R, PP);
@@ -182,6 +183,7 @@ public:
                     QLyap = dA[idx] * PP * AT + A * PP * dAT - dA[idx] * PP * HT * AK.transpose() - AK * _ss.H * PP * dAT + AK * AK.transpose() * _ss.dR[idx] + dQ;
                 }
             }
+            QLyap = (QLyap + QLyap.transpose()) / 2.0;
             Eigen::MatrixXd dPP(_dim, _dim);
             DLyap(AAKH, QLyap, dPP);
             dS[idx] = _ss.H * dPP * HT + _ss.dR[idx];
