@@ -298,7 +298,7 @@ public:
     } // void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd& y, const std::vector<std::vector<Eigen::VectorXd>>& dx, std::vector<Eigen::VectorXd>& xnew, std::vector<std::vector<Eigen::VectorXd>>& dxnew)
 
 
-    void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd &yhat)
+    void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd& y, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd& yhat)
     {
         std::vector<int> idx_observed;
         for (size_t idx=0; idx < _num_output; idx++)
@@ -372,7 +372,7 @@ public:
         sqrtS.setZero();
         for (size_t idx=0; idx < _num_latent; idx++) sqrtS(idx, idx) = sqrt(S(idx));
         yhat = U * sqrtS * Tyhat;
-    } // void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd &yhat)
+    } // void step(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd& y, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd& yhat)
 
 
     void step(std::vector<Eigen::VectorXd>& x, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd& yhat)
@@ -425,7 +425,7 @@ public:
     } // void step(std::vector<Eigen::VectorXd>& x, std::vector<Eigen::VectorXd>& xnew, Eigen::VectorXd& yhat)
 
 
-    void update(const Eigen::VectorXd &params)
+    void update(const Eigen::VectorXd& params)
     {
         if (U.size() > 16)
         {
@@ -450,10 +450,10 @@ public:
             Eigen::VectorXd tmp = igp_params.col(idx);
             _IGPs[idx]->update(tmp);
         }
-    } // void update(const Eigen::VectorXd &params)
+    } // void update(const Eigen::VectorXd& params)
 
 
-    double negLogLikelihood(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, const std::vector<std::vector<Eigen::VectorXd> >& dx, Eigen::VectorXd &grad)
+    double negLogLikelihood(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd& y, const std::vector<std::vector<Eigen::VectorXd> >& dx, Eigen::VectorXd& grad)
     {
         std::vector<int> idx_observed;
         idx_observed.reserve(_num_output);
@@ -605,10 +605,10 @@ public:
         igp_grad.resize(igp_grad.size(), 1);
         grad.tail(igp_grad.size()) = igp_grad;
         return loss;
-    } // double negLogLikelihood(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd &y, const std::vector<std::vector<Eigen::VectorXd> >& dx, Eigen::VectorXd &grad)
+    } // double negLogLikelihood(const std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd& y, const std::vector<std::vector<Eigen::VectorXd> >& dx, Eigen::VectorXd& grad)
 
 
-    double negLogLikelihood(Eigen::VectorXd *x, const Eigen::VectorXd &y)
+    double negLogLikelihood(std::vector<Eigen::VectorXd>& x, const Eigen::VectorXd& y)
     {
         std::vector<int> idx_observed;
         idx_observed.reserve(_num_output);
