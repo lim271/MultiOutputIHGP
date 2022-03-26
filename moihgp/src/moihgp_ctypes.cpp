@@ -12,9 +12,9 @@ namespace moihgp {
 
 extern "C" {
 
-MOIHGPOnlineLearning<Matern32StateSpace>* online32_new(double dt, size_t num_output, size_t num_latent, double gamma, size_t windowsize, bool threading)
+MOIHGPOnlineLearning<Matern32StateSpace>* online32_new(double dt, size_t num_output, size_t num_latent, double gamma, double lambda, size_t windowsize, bool threading)
 {
-    return new MOIHGPOnlineLearning<Matern32StateSpace>(dt, num_output, num_latent, gamma, windowsize, threading);
+    return new MOIHGPOnlineLearning<Matern32StateSpace>(dt, num_output, num_latent, gamma, lambda, windowsize, threading);
 }
 
 void online32_del(MOIHGPOnlineLearning<Matern32StateSpace>* gp)
@@ -49,9 +49,9 @@ size_t online32_getNumParam(MOIHGPOnlineLearning<Matern32StateSpace>* gp)
     return num_param;
 }
 
-MOIHGPOnlineLearning<Matern52StateSpace>* online52_new(double dt, size_t num_output, size_t num_latent, double gamma, size_t windowsize, bool threading)
+MOIHGPOnlineLearning<Matern52StateSpace>* online52_new(double dt, size_t num_output, size_t num_latent, double gamma, double lambda, size_t windowsize, bool threading)
 {
-    return new MOIHGPOnlineLearning<Matern52StateSpace>(dt, num_output, num_latent, gamma, windowsize, threading);
+    return new MOIHGPOnlineLearning<Matern52StateSpace>(dt, num_output, num_latent, gamma, lambda, windowsize, threading);
 }
 
 void online52_del(MOIHGPOnlineLearning<Matern52StateSpace>* gp)
@@ -86,9 +86,9 @@ size_t online52_getNumParam(MOIHGPOnlineLearning<Matern52StateSpace>* gp)
     return num_param;
 }
 
-MOIHGPRegression<Matern32StateSpace>* regression32_new(double dt, size_t num_output, size_t num_latent, size_t num_data, bool threading)
+MOIHGPRegression<Matern32StateSpace>* regression32_new(double dt, size_t num_output, size_t num_latent, size_t num_data, double lambda, bool threading)
 {
-    return new MOIHGPRegression<Matern32StateSpace>(dt, num_output, num_latent, num_data, threading);
+    return new MOIHGPRegression<Matern32StateSpace>(dt, num_output, num_latent, num_data, lambda, threading);
 }
 
 void regression32_del(MOIHGPRegression<Matern32StateSpace>* gp)
@@ -125,9 +125,9 @@ size_t regression32_getNumParam(MOIHGPRegression<Matern32StateSpace>* gp)
     return num_param;
 }
 
-MOIHGPRegression<Matern52StateSpace>* regression52_new(double dt, size_t num_output, size_t num_latent, size_t num_data, bool threading)
+MOIHGPRegression<Matern52StateSpace>* regression52_new(double dt, size_t num_output, size_t num_latent, size_t num_data, double lambda, bool threading)
 {
-    return new MOIHGPRegression<Matern52StateSpace>(dt, num_output, num_latent, num_data, threading);
+    return new MOIHGPRegression<Matern52StateSpace>(dt, num_output, num_latent, num_data, lambda, threading);
 }
 
 void regression52_del(MOIHGPRegression<Matern52StateSpace>* gp)

@@ -103,8 +103,7 @@ public:
     void backwardSmoother(const std::vector<Eigen::VectorXd>& X, std::vector<Eigen::VectorXd>& Xprev, Eigen::MatrixXd& P, Eigen::MatrixXd& G)
     {
         Eigen::MatrixXd PP = A * PF * A + Q;
-        Eigen::LDLT<Eigen::MatrixXd> PPldl = PP.ldlt();
-        G = PPldl.solve(A * PF).transpose();    // G = PF*A*inv(PP)
+        G = PP.ldlt().solve(A * PF).transpose();    // G = PF*A*inv(PP)
         DLyap(G, PF - G * PP * G.transpose(), P);    // dlyap(G)
         Xprev.push_back(X.back());
         for (std::vector<Eigen::VectorXd>::iterator x = X.end(); x != X.begin(); x--)
@@ -180,10 +179,9 @@ public:
                 }
                 else
                 {
-                    QLyap = dA[idx] * PP * AT + A * PP * dAT - dA[idx] * PP * HT * AK.transpose() - AK * _ss.H * PP * dAT + AK * AK.transpose() * _ss.dR[idx] + dQ;
+                    QLyap = dA[idx] * PP * AT + A * PP * dAT - dA[idx] * PP * HT * AK.transpose() - AK * _ss.H * PP * dAT + AK * _ss.dR[idx] * AK.transpose() + dQ;
                 }
             }
-            QLyap = (QLyap + QLyap.transpose()) / 2.0;
             Eigen::MatrixXd dPP(_dim, _dim);
             DLyap(AAKH, QLyap, dPP);
             dS[idx] = _ss.H * dPP * HT + _ss.dR[idx];

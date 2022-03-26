@@ -15,7 +15,6 @@ bool DARE(const Eigen::MatrixXd &Ad, const Eigen::MatrixXd &Bd, const Eigen::Mat
 
     Eigen::MatrixXd AdT = Ad.transpose();
     Eigen::MatrixXd BdT = Bd.transpose();
-    Eigen::MatrixXd Rinv = R.inverse();
 
     double diff;
     for (uint i = 0; i < dare_maxiter; ++i)

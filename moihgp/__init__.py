@@ -6,7 +6,7 @@ import numpy as np
 
 class MOIHGPOnlineLearning(object):
 
-    def __init__(self, dt, num_output, num_latent, gamma=0.9, l1_reg=1.0, windowsize=1, threading=False, kernel="Matern32", libpath=None):
+    def __init__(self, dt, num_output, num_latent, gamma=0.9, l1_reg=0.0, windowsize=1, threading=False, kernel="Matern32", libpath=None):
         self.dt = dt
         self.num_output = num_output
         self.num_latent = num_latent

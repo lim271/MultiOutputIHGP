@@ -14,6 +14,7 @@ int main()
     double dt = 0.1;
     size_t num_output = 2;
     size_t num_latent = 1;
+    double lambda = 0.0;
     bool threading = true;
     Eigen::MatrixXd H(2, 2);
     H << 0.7, 0.3, -0.3, 0.7;
@@ -29,7 +30,7 @@ int main()
     data.shrink_to_fit();
     size_t num_data = data.size();
 
-    moihgp::MOIHGPRegression<moihgp::Matern32StateSpace> gp(dt, num_output, num_latent, num_data, threading);
+    moihgp::MOIHGPRegression<moihgp::Matern32StateSpace> gp(dt, num_output, num_latent, num_data, lambda, threading);
     clock_t tic = clock();
     int niter = gp.fit(data);
     clock_t toc = clock();

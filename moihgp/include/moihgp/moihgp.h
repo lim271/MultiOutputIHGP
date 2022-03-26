@@ -4,12 +4,12 @@
 #include <cstdlib>
 #include <vector>
 #include <cmath>
+#include <random>
 #include <assert.h>
 #include <pthread.h>
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <moihgp/ihgp.h>
-#include <utils/pinv.h>
 
 
 
@@ -78,11 +78,17 @@ class MOIHGP{
 
 public:
 
-    MOIHGP(const double& dt, const size_t& num_output, const size_t& num_latent, const bool& threading)
+    MOIHGP(const double& dt, const size_t& num_output, const size_t& num_latent, const double& lambda, const bool& threading)
     {
         _dt = dt;
         _num_output = num_output;
         _num_latent = num_latent;
+        _lambda.setZero(1, num_latent);
+        double reg_weight = lambda / double((num_latent - 1) * (num_latent - 1));
+        for (size_t idx = 0; idx < _num_latent; idx++)
+        {
+            _lambda(0, idx) = double(idx * idx) * reg_weight;
+        }
         _IGPs = std::vector<IHGP<StateSpace>*>(num_latent, nullptr);
         for (size_t idx=0; idx < num_latent; idx++)
         {
@@ -92,36 +98,39 @@ public:
         _igp_num_param = _IGPs[0]->getNumParam();
         _num_param = num_output * num_latent + num_latent + 1 + num_latent * _igp_num_param;
         dA.reserve(num_output * num_latent);
-        int idx=0;
         for (size_t row=0; row < num_output; row++)
         {
             for (size_t col=0; col < num_latent; col++)
             {
                 dA.push_back(Eigen::MatrixXd(num_output, num_latent).setZero());
-                dA[idx](row, col) = 1.0;
-                ++idx;
+                dA.back()(row, col) = 1.0;
             }
         }
-        Eigen::MatrixXd rand(num_output, num_latent);
-        rand.setRandom();
         Eigen::MatrixXd I(num_output, num_latent);
         I.setIdentity();
+        std::random_device rd;
+        std::mt19937 mersenne(rd());
+        std::normal_distribution<> distr(0.0, 1e-3);
+        Eigen::MatrixXd rand(num_output, num_latent);
+        for (size_t row=0; row < num_output; row++)
+        {
+            for (size_t col=0; col < num_latent; col++)
+            {
+                rand(row, col) = distr(mersenne);
+            }
+        }
         if (num_output * num_latent > 16)
         {
-            Eigen::BDCSVD<Eigen::MatrixXd> svd(I + 1e-2 * rand, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            Eigen::BDCSVD<Eigen::MatrixXd> svd(I + rand, Eigen::ComputeThinU | Eigen::ComputeThinV);
             U = svd.matrixU() * svd.matrixV().transpose();
         }
         else
         {
-            Eigen::JacobiSVD<Eigen::MatrixXd> svd(I + 1e-2 * rand, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            Eigen::JacobiSVD<Eigen::MatrixXd> svd(I + rand, Eigen::ComputeThinU | Eigen::ComputeThinV);
             U = svd.matrixU() * svd.matrixV().transpose();
         }
         S.setOnes(num_latent);
-        for (size_t idx=0; idx < _num_latent; idx++)
-        {
-            S(idx) = double(_num_latent + 1 - idx) / double(_num_latent);
-        }
-        sigma = 1e-1;
+        sigma = 1e-2;
         if (_num_latent < 2)
         {
             _threading = false;
@@ -170,8 +179,8 @@ public:
                 U0.row(idx) = U.row(idx_observed[idx]);
                 y_observed(idx) = y(idx_observed[idx]);
             }
-            Eigen::MatrixXd sqrtSinv(_num_latent, _num_latent);
-            Ty = sqrtSinv * PseudoInverse(U0) * y_observed;
+            Eigen::MatrixXd U0T = U0.transpose();
+            Ty = sqrtSinv * ((U0T * U0).ldlt().solve(U0T * y_observed));
         }
         else
         {
@@ -251,8 +260,8 @@ public:
                 U0.row(idx) = U.row(idx_observed[idx]);
                 y_observed(idx) = y(idx_observed[idx]);
             }
-            Eigen::MatrixXd sqrtSinv(_num_latent, _num_latent);
-            Ty = sqrtSinv * PseudoInverse(U0) * y_observed;
+            Eigen::MatrixXd U0T = U0.transpose();
+            Ty = sqrtSinv * ((U0T * U0).ldlt().solve(U0T * y_observed));
         }
         else
         {
@@ -325,8 +334,8 @@ public:
                 U0.row(idx) = U.row(idx_observed[idx]);
                 y_observed(idx) = y(idx_observed[idx]);
             }
-            Eigen::MatrixXd sqrtSinv(_num_latent, _num_latent);
-            Ty = sqrtSinv * PseudoInverse(U0) * y_observed;
+            Eigen::MatrixXd U0T = U0.transpose();
+            Ty = sqrtSinv * ((U0T * U0).ldlt().solve(U0T * y_observed));
         }
         else
         {
@@ -427,22 +436,23 @@ public:
 
     void update(const Eigen::VectorXd& params)
     {
-        if (U.size() > 16)
+        size_t sizeU = U.size();
+        if (sizeU > 16)
         {
             Eigen::MatrixXd Uparam = params.head(_num_output * _num_latent);
-            Uparam.resize(_num_output, _num_latent);
-            Eigen::BDCSVD<Eigen::MatrixXd> svd(Uparam, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            Uparam.resize(_num_latent, _num_output);
+            Eigen::BDCSVD<Eigen::MatrixXd> svd(Uparam.transpose(), Eigen::ComputeThinU | Eigen::ComputeThinV);
             U = svd.matrixU() * svd.matrixV().transpose();
         }
         else
         {
             Eigen::MatrixXd Uparam = params.head(_num_output * _num_latent);
-            Uparam.resize(_num_output, _num_latent);
-            Eigen::JacobiSVD<Eigen::MatrixXd> svd(Uparam, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            Uparam.resize(_num_latent, _num_output);
+            Eigen::JacobiSVD<Eigen::MatrixXd> svd(Uparam.transpose(), Eigen::ComputeThinU | Eigen::ComputeThinV);
             U = svd.matrixU() * svd.matrixV().transpose();
         }
-        S = params.block(_num_output * _num_latent, 0, _num_latent, 1);
-        sigma = params(_num_output * _num_latent + _num_latent + 1);
+        S = params.segment(sizeU, _num_latent);
+        sigma = params(sizeU + _num_latent);
         Eigen::MatrixXd igp_params = params.tail(_igp_num_param * _num_latent);
         igp_params.resize(_igp_num_param, _num_latent);
         for (size_t idx=0; idx < _num_latent; idx++)
@@ -485,8 +495,8 @@ public:
                 U0.row(idx) = U.row(idx_observed[idx]);
                 y_observed(idx) = y(idx_observed[idx]);
             }
-            Eigen::MatrixXd sqrtSinv(_num_latent, _num_latent);
-            Ty = sqrtSinv * PseudoInverse(U0) * y_observed;
+            Eigen::MatrixXd U0T = U0.transpose();
+            Ty = sqrtSinv * ((U0T * U0).ldlt().solve(U0T * y_observed));
         }
         else
         {
@@ -495,8 +505,8 @@ public:
         Eigen::MatrixXd I(_num_output, _num_output);
         I.setIdentity();
         double y_UUTy = ((I - U * U.transpose()) * y).norm();
-        double m_n = std::max(double(_num_output) - double(_num_latent), 0.0);
-        double loss = 0.5 * log(S.sum()) + 0.5 * m_n * log(sigma) + 0.5 * y_UUTy / sigma;
+        double m_n = std::max(double(_num_output - _num_latent), 0.0);
+        double loss = 0.5 * log(S.sum()) + 0.5 * m_n * log(sigma) + 0.5 * y_UUTy / sigma + (_lambda * S)(0, 0);
         Eigen::VectorXd pv(_num_latent);
         for (size_t idx=0; idx < _num_latent; idx++)
         {
@@ -509,8 +519,8 @@ public:
         Eigen::MatrixXd svdU;
         Eigen::MatrixXd svdV;
         Eigen::VectorXd svdS;
-        Eigen::MatrixXd dAdT;
-        if (U.size() > 16)
+        size_t sizeU = U.size();
+        if (sizeU > 16)
         {
             Eigen::BDCSVD<Eigen::MatrixXd> svd(
                 U,
@@ -530,7 +540,7 @@ public:
             svdV = svd.matrixV();
             svdS = svd.singularValues();
         }
-        U = svdU * svdV.transpose();
+        grad.setZero();
         for (size_t idx1=0; idx1 < _num_output * _num_latent; idx1++)
         {
             Eigen::MatrixXd invS = (1.0 / svdS.array()).matrix().asDiagonal();
@@ -546,10 +556,9 @@ public:
                 grad(idx1) += (pv(idx2) * dAdT.row(idx2) * y)(0, 0);
             }
         }
-        int sizeU = _num_output * _num_latent;
+        Eigen::MatrixXd dS(_num_latent, _num_latent);
         for (size_t idx1=0; idx1 < _num_latent; idx1++) {
-            grad(sizeU + idx1) = 0.5 / S(idx1);
-            Eigen::MatrixXd dS(_num_latent, _num_latent);
+            grad(sizeU + idx1) = 0.5 / S(idx1) + _lambda(0, idx1);
             dS.setZero();
             dS(idx1, idx1) = 1.0;
             Eigen::MatrixXd dAdT = -0.5 * sqrtSinv3 * dS * U.transpose();
@@ -636,7 +645,8 @@ public:
                 U0.row(idx) = U.row(idx_observed[idx]);
                 y_observed(idx) = y(idx_observed[idx]);
             }
-            Ty = sqrtSinv * PseudoInverse(U0) * y_observed;
+            Eigen::MatrixXd U0T = U0.transpose();
+            Ty = sqrtSinv * ((U0T * U0).ldlt().solve(U0T * y_observed));
         }
         else
         {
@@ -644,7 +654,9 @@ public:
         }
         Eigen::MatrixXd I(_num_output, _num_output);
         I.setIdentity();
-        double loss = 0.5 * log(S.sum()) + 0.5 * (_num_output - _num_latent) * log(sigma) + 0.5 / sigma * ((I - U * U.transpose()) * y).norm();
+        double y_UUTy = ((I - U * U.transpose()) * y).norm();
+        double m_n = std::max(double(_num_output -_num_latent), 0.0);
+        double loss = 0.5 * log(S.sum()) + 0.5 * m_n * log(sigma) + 0.5 * y_UUTy / sigma + (_lambda * S)(0, 0);
         if (_threading)
         {
             pthread_t* threads = new pthread_t[_num_latent];
@@ -721,11 +733,12 @@ public:
             igp_params.col(idx) = _IGPs[idx]->getParams();
         }
         igp_params.resize(_num_latent * _igp_num_param, 1);
-        Eigen::MatrixXd Uparam = U;
-        Uparam.resize(_num_output * _num_latent, 1);
-        params.head(_num_output * _num_latent) = Uparam;
-        params.block(_num_output * _num_latent, 0, _num_latent, 1) = S;
-        params(_num_output * _num_latent + _num_latent + 1) = sigma;
+        Eigen::MatrixXd Uparam = U.transpose();
+        size_t sizeU = U.size();
+        Uparam.resize(sizeU, 1);
+        params.head(sizeU) = Uparam;
+        params.segment(sizeU, _num_latent) = S;
+        params(sizeU + _num_latent) = sigma;
         params.tail(_num_latent * _igp_num_param) = igp_params;
         return params;
     }
@@ -741,6 +754,7 @@ private:
     std::vector<IHGP<StateSpace>*> _IGPs;
     bool _threading;
     double _dt;
+    Eigen::MatrixXd _lambda;
     size_t _dim;
     size_t _num_output;
     size_t _num_latent;
