@@ -110,7 +110,7 @@ public:
         I.setIdentity();
         std::random_device rd;
         std::mt19937 mersenne(rd());
-        std::normal_distribution<> distr(0.0, 1e-3);
+        std::normal_distribution<> distr(0.0, 1e-2);
         Eigen::MatrixXd rand(num_output, num_latent);
         for (size_t row=0; row < num_output; row++)
         {

@@ -54,8 +54,8 @@ target_link_libraries(example_regression
   pthread
 )
 
-add_library(moihgp_ctypes MODULE src/moihgp_ctypes.cpp)
-target_link_libraries(moihgp_ctypes
+add_library(moihgp MODULE src/wrapper.cpp)
+target_link_libraries(moihgp
   ${EXTERNAL_LIBS}
   Eigen3::Eigen
   pthread

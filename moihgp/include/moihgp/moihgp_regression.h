@@ -89,10 +89,14 @@ public:
         _dim = _moihgp->getIGPDim();
         _num_param = _moihgp->getNumParam();
         _igp_num_param = _moihgp->getNumIGPParam();
-        _lb = Eigen::VectorXd(_num_param).setConstant(-10.0);
-        _ub = Eigen::VectorXd(_num_param).setConstant( 10.0);
-        _lb.tail(_igp_num_param * _num_latent + _num_latent + 1).setConstant(1e-4);
-        _ub.tail(_igp_num_param * _num_latent + _num_latent + 1).setConstant(10.0);
+        _lb = Eigen::VectorXd(_num_param);
+        _ub = Eigen::VectorXd(_num_param);
+        _lb.head(_num_output * _num_latent).setConstant(-1e+4);
+        _ub.head(_num_output * _num_latent).setConstant( 1e+4);
+        _lb.segment(_num_output * _num_latent, _num_latent).setConstant(1e-4);
+        _ub.segment(_num_output * _num_latent, _num_latent).setConstant(1e+4);
+        _lb.tail(_igp_num_param * _num_latent + 1).setConstant(1e-4);
+        _ub.tail(_igp_num_param * _num_latent + 1).setConstant(1e+2);
         _params = _moihgp->getParams();
         _LBFGSB_param.max_iterations = 1000;
         _LBFGSB_param.m = 10;

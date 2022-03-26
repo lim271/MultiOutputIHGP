@@ -130,10 +130,14 @@ public:
         _dim = _moihgp->getIGPDim();
         _igp_num_param = _moihgp->getNumIGPParam();
         _num_param = _moihgp->getNumParam();
-        _lb = Eigen::VectorXd(_num_param).setConstant(-10.0);
-        _ub = Eigen::VectorXd(_num_param).setConstant( 10.0);
-        _lb.tail(_igp_num_param * _num_latent + _num_latent + 1).setConstant(1e-4);
-        _ub.tail(_igp_num_param * _num_latent + _num_latent + 1).setConstant(10.0);
+        _lb = Eigen::VectorXd(_num_param);
+        _ub = Eigen::VectorXd(_num_param);
+        _lb.head(_num_output * _num_latent).setConstant(-1e+4);
+        _ub.head(_num_output * _num_latent).setConstant( 1e+4);
+        _lb.segment(_num_output * _num_latent, _num_latent).setConstant(1e-4);
+        _ub.segment(_num_output * _num_latent, _num_latent).setConstant(1e+4);
+        _lb.tail(_igp_num_param * _num_latent + 1).setConstant(1e-4);
+        _ub.tail(_igp_num_param * _num_latent + 1).setConstant(1e+2);
         x.assign(_num_latent, Eigen::VectorXd(_dim).setZero());
         dx.assign(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
         _gamma = gamma;

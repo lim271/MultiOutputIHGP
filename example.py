@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 dt = 0.1
 gamma = 0.9
 l1_reg = 0.0
-windowsize = 1
+windowsize = 2
 
 if __name__=='__main__':
     v1 = np.array([1.1, 0.9])
@@ -32,7 +32,7 @@ if __name__=='__main__':
         p22.append(p22[-1] + v22[-1] * dt)
     data = np.hstack([p11, p12, p21, p22])
     _, num_output = data.shape
-    num_latent = num_output
+    num_latent = round(num_output / 2)
     gp = MOIHGPOnlineLearning(dt, num_output, num_latent, gamma=gamma, l1_reg=l1_reg, windowsize=windowsize, threading=False)
     yhat = []
     for y in data:
