@@ -12,7 +12,7 @@ mkdir build && cd build
 cmake ..
 make
 ```
-A shared library compiled with g >= 7.5.0 may not work, then please set the compiler flag with lower version of g++:
+A shared library compiled with g++ >= 7.5.0 may not work, then please set the compiler flag with lower version of g++:
 ```
 cmake -DCMAKE_CXX_COMPILER=/bin/g++-7 ..
 ```
