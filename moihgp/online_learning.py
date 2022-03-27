@@ -1,5 +1,8 @@
 import numpy as np
-from scipy.optimize.lbfgsb import _minimize_lbfgsb, MemoizeJac
+try:
+    from scipy.optimize.lbfgsb import _minimize_lbfgsb, MemoizeJac
+except:
+    from scipy.optimize._lbfgsb_py import _minimize_lbfgsb, MemoizeJac
 from .pywrapper import MOIHGP
 
 
