@@ -12,6 +12,10 @@ mkdir build && cd build
 cmake ..
 make
 ```
+A shared library compiled with g >= 7.5.0 may not work, then please set the compiler flag with lower version of g++:
+```
+cmake -DCMAKE_CXX_COMPILER=/bin/g++-7 ..
+```
 
 ## C++ Examples
 - Regression example
@@ -33,6 +37,7 @@ python3 example.py
 
 ## Dependencies
 - [Eigen3](https://eigen.tuxfamily.org/index.php?title=Main_Page)
+- [SciPy](https://scipy.org/) <= 1.7.3
 
 ## Citation
 J. Lim, J. Park, S. Nah, & J. Choi. (2021, May). Multi-output Infinite Horizon Gaussian Processes. In *2021 IEEE International Conference on Robotics and Automation (ICRA)* (pp. 1542-1549). IEEE. (https://ieeexplore.ieee.org/document/9561031)
