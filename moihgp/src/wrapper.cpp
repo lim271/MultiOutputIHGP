@@ -24,15 +24,14 @@ GP32* gp32_new(double dt, size_t num_output, size_t num_latent, double lambda, b
 } // GP32* gp32_new(double dt, size_t num_output, size_t num_latent, bool threading)
 
 
-void* gp32_del(GP32* gp)
+void gp32_del(GP32* gp)
 {
     gp->~MOIHGP();
-} // void* gp32_del(GP32* gp)
+} // void gp32_del(GP32* gp)
 
 
-void* gp32_step1(GP32* gp, double* x, double* y, double* dx, double* xnew, double* yhat, double* dxnew)
+void gp32_step1(GP32* gp, double* x, double* y, double* dx, double* xnew, double* yhat, double* dxnew)
 {
-
     size_t num_output = gp->getNumOutput();
     size_t num_latent = gp->getNumLatent();
     size_t igp_num_param = gp->getNumIGPParam();
@@ -81,13 +80,11 @@ void* gp32_step1(GP32* gp, double* x, double* y, double* dx, double* xnew, doubl
             }
         }
     }
+} // void gp32_step1(GP32* gp, double* x, double* y, double* dx, double* xnew, double* yhat, double* dxnew)
 
-} // void* gp32_step1(GP32* gp, double* x, double* y, double* dx, double* xnew, double* yhat, double* dxnew)
 
-
-void* gp32_step2(GP32* gp, double* x, double* y, double* dx, double* xnew, double* dxnew)
+void gp32_step2(GP32* gp, double* x, double* y, double* dx, double* xnew, double* dxnew)
 {
-
     size_t num_output = gp->getNumOutput();
     size_t num_latent = gp->getNumLatent();
     size_t igp_num_param = gp->getNumIGPParam();
@@ -131,13 +128,11 @@ void* gp32_step2(GP32* gp, double* x, double* y, double* dx, double* xnew, doubl
             }
         }
     }
+} // void gp32_step2(GP32* gp, double* x, double* y, double* dx, double* xnew, double* dxnew)
 
-} // void* gp32_step2(GP32* gp, double* x, double* y, double* dx, double* xnew, double* dxnew)
 
-
-void* gp32_step3(GP32* gp, double* x, double* y, double* xnew, double* yhat)
+void gp32_step3(GP32* gp, double* x, double* y, double* xnew, double* yhat)
 {
-
     size_t num_output = gp->getNumOutput();
     size_t num_latent = gp->getNumLatent();
     size_t igp_num_param = gp->getNumIGPParam();
@@ -170,13 +165,11 @@ void* gp32_step3(GP32* gp, double* x, double* y, double* xnew, double* yhat)
             xnew[idx1 * dim + idx2] = _xnew[idx1](idx2);
         }
     }
+} // void gp32_step3(GP32* gp, double* x, double* y, double* xnew, double* yhat)
 
-} // void* gp32_step3(GP32* gp, double* x, double* y, double* xnew, double* yhat)
 
-
-void* gp32_step4(GP32* gp, double* x, double* xnew, double* yhat)
+void gp32_step4(GP32* gp, double* x, double* xnew, double* yhat)
 {
-
     size_t num_output = gp->getNumOutput();
     size_t num_latent = gp->getNumLatent();
     size_t igp_num_param = gp->getNumIGPParam();
@@ -207,16 +200,15 @@ void* gp32_step4(GP32* gp, double* x, double* xnew, double* yhat)
             xnew[idx1 * dim + idx2] = _xnew[idx1](idx2);
         }
     }
+} // void gp32_step4(GP32* gp, double* x, double* xnew, double* yhat)
 
-} // void* gp32_step4(GP32* gp, double* x, double* xnew, double* yhat)
 
-
-void* gp32_update(GP32* gp, double* params)
+void gp32_update(GP32* gp, double* params)
 {
     size_t num_param = gp->getNumParam();
     Eigen::VectorXd _params = Eigen::Map<Eigen::VectorXd>(params, num_param, 1);
     gp->update(_params);
-} // void* gp32_update(GP32* gp, double* params)
+} // void gp32_update(GP32* gp, double* params)
 
 
 double gp32_lik1(GP32* gp, double* x, double* y, double* dx, double* grad)
@@ -256,7 +248,6 @@ double gp32_lik1(GP32* gp, double* x, double* y, double* dx, double* grad)
     }
 
     return loss;
-
 } // double gp32_lik1(GP32* gp, double* x, double* y, double* dx, Eigen::VectorXd &grad)
 
 
@@ -283,11 +274,10 @@ double gp32_lik2(GP32* gp, double* x, double* y)
     double loss = gp->negLogLikelihood(_x, _y);
 
     return loss;
-
 } // double gp32_lik2(GP32* gp, double* x, double* y)
 
 
-void* gp32_get_params(GP32* gp, double* params)
+void gp32_get_params(GP32* gp, double* params)
 {
     size_t num_param = gp->getNumParam();
     Eigen::VectorXd _params = gp->getParams();
@@ -295,7 +285,7 @@ void* gp32_get_params(GP32* gp, double* params)
     {
         params[idx] = _params(idx);
     }
-} // void* gp32_get_params(GP32* gp, double* params)
+} // void gp32_get_params(GP32* gp, double* params)
 
 
 size_t gp32_igp_dim(GP32* gp)
@@ -322,15 +312,14 @@ GP52* gp52_new(double dt, size_t num_output, size_t num_latent, double lambda, b
 } // GP52* gp52_new(double dt, size_t num_output, size_t num_latent, bool threading)
 
 
-void* gp52_del(GP52* gp)
+void gp52_del(GP52* gp)
 {
     gp->~MOIHGP();
-} // void* gp52_del(GP52* gp)
+} // void gp52_del(GP52* gp)
 
 
-void* gp52_step1(GP52* gp, double* x, double* y, double* dx, double* xnew, double* yhat, double* dxnew)
+void gp52_step1(GP52* gp, double* x, double* y, double* dx, double* xnew, double* yhat, double* dxnew)
 {
-
     size_t num_output = gp->getNumOutput();
     size_t num_latent = gp->getNumLatent();
     size_t igp_num_param = gp->getNumIGPParam();
@@ -379,13 +368,11 @@ void* gp52_step1(GP52* gp, double* x, double* y, double* dx, double* xnew, doubl
             }
         }
     }
+} // void gp52_step1(GP52* gp, double* x, double* y, double* dx, double* xnew, double* yhat, double* dxnew)
 
-} // void* gp52_step1(GP52* gp, double* x, double* y, double* dx, double* xnew, double* yhat, double* dxnew)
 
-
-void* gp52_step2(GP52* gp, double* x, double* y, double* dx, double* xnew, double* dxnew)
+void gp52_step2(GP52* gp, double* x, double* y, double* dx, double* xnew, double* dxnew)
 {
-
     size_t num_output = gp->getNumOutput();
     size_t num_latent = gp->getNumLatent();
     size_t igp_num_param = gp->getNumIGPParam();
@@ -429,13 +416,11 @@ void* gp52_step2(GP52* gp, double* x, double* y, double* dx, double* xnew, doubl
             }
         }
     }
+} // void gp52_step2(GP52* gp, double* x, double* y, double* dx, double* xnew, double* dxnew)
 
-} // void* gp52_step2(GP52* gp, double* x, double* y, double* dx, double* xnew, double* dxnew)
 
-
-void* gp52_step3(GP52* gp, double* x, double* y, double* xnew, double* yhat)
+void gp52_step3(GP52* gp, double* x, double* y, double* xnew, double* yhat)
 {
-
     size_t num_output = gp->getNumOutput();
     size_t num_latent = gp->getNumLatent();
     size_t igp_num_param = gp->getNumIGPParam();
@@ -468,13 +453,11 @@ void* gp52_step3(GP52* gp, double* x, double* y, double* xnew, double* yhat)
             xnew[idx1 * dim + idx2] = _xnew[idx1](idx2);
         }
     }
+} // void gp52_step3(GP52* gp, double* x, double* y, double* xnew, double* yhat)
 
-} // void* gp52_step3(GP52* gp, double* x, double* y, double* xnew, double* yhat)
 
-
-void* gp52_step4(GP52* gp, double* x, double* xnew, double* yhat)
+void gp52_step4(GP52* gp, double* x, double* xnew, double* yhat)
 {
-
     size_t num_output = gp->getNumOutput();
     size_t num_latent = gp->getNumLatent();
     size_t igp_num_param = gp->getNumIGPParam();
@@ -505,16 +488,15 @@ void* gp52_step4(GP52* gp, double* x, double* xnew, double* yhat)
             xnew[idx1 * dim + idx2] = _xnew[idx1](idx2);
         }
     }
+} // void gp52_step4(GP52* gp, double* x, double* xnew, double* yhat)
 
-} // void* gp52_step4(GP52* gp, double* x, double* xnew, double* yhat)
 
-
-void* gp52_update(GP52* gp, double* params)
+void gp52_update(GP52* gp, double* params)
 {
     size_t num_param = gp->getNumParam();
     Eigen::VectorXd _params = Eigen::Map<Eigen::VectorXd>(params, num_param, 1);
     gp->update(_params);
-} // void* gp52_update(GP52* gp, double* params)
+} // void gp52_update(GP52* gp, double* params)
 
 
 double gp52_lik1(GP52* gp, double* x, double* y, double* dx, double* grad)
@@ -554,7 +536,6 @@ double gp52_lik1(GP52* gp, double* x, double* y, double* dx, double* grad)
     }
 
     return loss;
-
 } // double gp52_lik1(GP52* gp, double* x, double* y, double* dx, Eigen::VectorXd &grad)
 
 
@@ -581,11 +562,10 @@ double gp52_lik2(GP52* gp, double* x, double* y)
     double loss = gp->negLogLikelihood(_x, _y);
 
     return loss;
-
 } // double gp52_lik2(GP52* gp, double* x, double* y)
 
 
-void* gp52_get_params(GP52* gp, double* params)
+void gp52_get_params(GP52* gp, double* params)
 {
     size_t num_param = gp->getNumParam();
     Eigen::VectorXd _params = gp->getParams();
@@ -593,7 +573,7 @@ void* gp52_get_params(GP52* gp, double* params)
     {
         params[idx] = _params(idx);
     }
-} // void* gp52_get_params(GP52* gp, double* params)
+} // void gp52_get_params(GP52* gp, double* params)
 
 
 size_t gp52_igp_dim(GP52* gp)
