@@ -28,9 +28,9 @@ extern "C"
 
 
 
-LIBRARY_API GP32* gp32_new(double dt, size_t num_output, size_t num_latent, double lambda, bool threading)
+LIBRARY_API GP32* gp32_new(double dt, size_t num_output, size_t num_latent, bool threading)
 {
-    return new GP32(dt, num_output, num_latent, lambda, threading);
+    return new GP32(dt, num_output, num_latent, threading);
 } // GP32* gp32_new(double dt, size_t num_output, size_t num_latent, bool threading)
 
 
@@ -326,9 +326,9 @@ LIBRARY_API size_t gp32_num_igp_param(GP32* gp)
 }
 
 
-LIBRARY_API GP52* gp52_new(double dt, size_t num_output, size_t num_latent, double lambda, bool threading)
+LIBRARY_API GP52* gp52_new(double dt, size_t num_output, size_t num_latent, bool threading)
 {
-    return new GP52(dt, num_output, num_latent, lambda, threading);
+    return new GP52(dt, num_output, num_latent, threading);
 } // GP52* gp52_new(double dt, size_t num_output, size_t num_latent, bool threading)
 
 

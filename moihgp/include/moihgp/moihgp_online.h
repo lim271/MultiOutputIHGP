@@ -120,13 +120,13 @@ class MOIHGPOnlineLearning {
 
 public:
 
-    MOIHGPOnlineLearning(const double& dt, const size_t& num_output, const size_t& num_latent, const double& gamma, const double& lambda, const size_t& windowsize, const bool& threading)
+    MOIHGPOnlineLearning(const double& dt, const size_t& num_output, const size_t& num_latent, const double& gamma, const size_t& windowsize, const bool& threading)
     {
         _dt = dt;
         _num_output = num_output;
         _num_latent = num_latent;
         _threading = threading;
-        _moihgp = new MOIHGP<StateSpace>(dt, num_output, num_latent, lambda, threading);
+        _moihgp = new MOIHGP<StateSpace>(dt, num_output, num_latent, threading);
         _dim = _moihgp->getIGPDim();
         _igp_num_param = _moihgp->getNumIGPParam();
         _num_param = _moihgp->getNumParam();

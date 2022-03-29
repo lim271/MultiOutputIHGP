@@ -9,8 +9,8 @@ from .pywrapper import MOIHGP
 
 class MOIHGPOnlineLearning:
 
-    def __init__(self, dt, num_output, num_latent, gamma, x_init=None, windowsize=None, kernel="Matern32", l1_reg=0.0, threading=False):
-        self.moihgp = MOIHGP(dt, num_output, num_latent, l1_reg=l1_reg, threading=threading)
+    def __init__(self, dt, num_output, num_latent, gamma, x_init=None, windowsize=None, kernel="Matern32", threading=False):
+        self.moihgp = MOIHGP(dt, num_output, num_latent, kernel=kernel, threading=threading)
         self.num_output = num_output
         self.num_latent = num_latent
         self.ihgp_dim = self.moihgp.igp_dim
@@ -18,12 +18,12 @@ class MOIHGPOnlineLearning:
         self.parameter_bounds = [
             (-np.inf, np.inf) # bounds of U
         ] * (num_output * num_latent) + [
-            (1e-8, np.inf) # bounds of S
+            (1e-4, np.inf) # bounds of S
         ] * num_latent + [
             (1e-4, 1e+2) # bounds of mixing noise
         ] + [
-            (1e-4, 1e+2), # bounds of IHGP magnitude
-            (1e-4, 1e+2), # bounds of IHGP lengthscale
+            (1e-2, 1e+2), # bounds of IHGP magnitude
+            (1e-2, 1e+2), # bounds of IHGP lengthscale
             (1e-4, 1e+2)  # bounds of IHGP noise
         ] * num_latent
         self.gamma = gamma

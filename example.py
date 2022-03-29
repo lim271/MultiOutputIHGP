@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 dt = 0.1
 gamma = 0.9
-l1_reg = 0.0
 windowsize = 2
 
 if __name__=='__main__':
@@ -33,7 +32,10 @@ if __name__=='__main__':
     data = np.hstack([p11, p12, p21, p22])
     _, num_output = data.shape
     num_latent = round(num_output * 2 / 3)
-    gp = MOIHGPOnlineLearning(dt, num_output, num_latent, gamma=gamma, l1_reg=l1_reg, windowsize=windowsize, threading=False)
+    gp = MOIHGPOnlineLearning(
+        dt, num_output, num_latent,
+        gamma=gamma, windowsize=windowsize, threading=False
+    )
     yhat = []
     for y in data:
         tic = time()
@@ -46,7 +48,11 @@ if __name__=='__main__':
             ii = slice(i*2, (i+1)*2)
             for j in range(num_output//2):
                 jj = slice(j*2, (j+1)*2)
-                Corr[i, j] = np.sign(np.trace(Cov[ii, jj])) * np.sqrt(np.trace(np.linalg.inv(Cov[ii, ii]) @ Cov[ii, jj] @ np.linalg.inv(Cov[jj, jj]) @ Cov[jj, ii])/2)
+                Corr[i, j] = np.sign(np.trace(Cov[ii, jj])) * np.sqrt(
+                    np.trace(
+                        np.linalg.solve(Cov[ii, ii], Cov[ii, jj]) @ np.linalg.solve(Cov[jj, jj], Cov[jj, ii])
+                    ) / 2
+                )
         print(Corr)
     yhat = np.array(yhat)
     plt.figure(1)

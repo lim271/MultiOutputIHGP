@@ -77,14 +77,14 @@ class MOIHGPRegression {
 
 public:
 
-    MOIHGPRegression(const double& dt, const size_t& num_output, const size_t& num_latent, const size_t& num_data, const double& lambda, const bool& threading)
+    MOIHGPRegression(const double& dt, const size_t& num_output, const size_t& num_latent, const size_t& num_data, const bool& threading)
     {
         _dt = dt;
         _num_output = num_output;
         _num_latent = num_latent;
         _num_data = num_data;
         _threading = threading;
-        _moihgp = new MOIHGP<StateSpace>(dt, num_output, num_latent, lambda, threading);
+        _moihgp = new MOIHGP<StateSpace>(dt, num_output, num_latent, threading);
         _dim = _moihgp->getIGPDim();
         _num_param = _moihgp->getNumParam();
         _igp_num_param = _moihgp->getNumIGPParam();

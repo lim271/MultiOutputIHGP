@@ -9,30 +9,29 @@ c_double_p = POINTER(c_double)
 
 class MOIHGP(object):
 
-    def __init__(self, dt, num_output, num_latent, kernel="Matern32", l1_reg=0.0, threading=False):
+    def __init__(self, dt, num_output, num_latent, kernel="Matern32", threading=False):
         self.dt = dt
         self.__num_output = num_output
         self.__num_latent = num_latent
         if platform.system()=="Windows":
             from ctypes import windll
-            lib = os.path.join(os.path.dirname(__file__), "build\moihgp.dll")
+            lib = os.path.join(os.path.dirname(__file__), "lib\moihgp.dll")
             self.__lib = windll.LoadLibrary(lib)
         else:
             if platform.system()=="Linux":
-                lib = os.path.join(os.path.dirname(__file__), "build/libmoihgp.so")
+                lib = os.path.join(os.path.dirname(__file__), "lib/libmoihgp.so")
             elif platform.system()=="Darwin":
-                lib = os.path.join(os.path.dirname(__file__), "build/libmoihgp.dylib")
+                lib = os.path.join(os.path.dirname(__file__), "lib/libmoihgp.dylib")
             else:
                 raise NotImplementedError("Unsupported OS type.")
             self.__lib = cdll.LoadLibrary(lib)
         if kernel=="Matern32":
             self.__lib.gp32_new.restype = c_void_p
-            self.__lib.gp32_new.argtypes = [c_double, c_size_t, c_size_t, c_double, c_bool]
+            self.__lib.gp32_new.argtypes = [c_double, c_size_t, c_size_t, c_bool]
             self.__obj = self.__lib.gp32_new(
                 c_double(dt),
                 c_size_t(num_output),
                 c_size_t(num_latent),
-                c_double(np.float64(l1_reg)),
                 c_bool(threading)
             )
             self.__del = self.__lib.gp32_del
@@ -56,12 +55,11 @@ class MOIHGP(object):
             self.__get_params = self.__lib.gp32_get_params
         elif kernel=="Matern52":
             self.__lib.gp52_new.restype = c_void_p
-            self.__lib.gp52_new.argtypes = [c_double, c_size_t, c_size_t, c_double, c_bool]
+            self.__lib.gp52_new.argtypes = [c_double, c_size_t, c_size_t, c_bool]
             self.__obj = self.lib.gp52_new(
                 c_double(dt),
                 c_size_t(num_output),
                 c_size_t(num_latent),
-                c_double(np.float64(l1_reg)),
                 c_bool(threading)
             )
             self.__del = self.__lib.gp52_del

@@ -29,17 +29,14 @@ IF(NOT MSVC)
   endif()
 endif()
 
-###########
-## Build ##
-###########
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
+
+## Build
+
 include_directories(include)
 include_directories(SYSTEM)
 include_directories(${EXTERNAL_INCLUDE_DIRS})
 
-## Build additional executables
 
 add_executable(example_online_learning cpp_examples/example_online_learning.cpp)
 target_link_libraries(example_online_learning
@@ -60,4 +57,13 @@ target_link_libraries(moihgp
   ${EXTERNAL_LIBS}
   Eigen3::Eigen
   pthread
+)
+
+
+
+## Install
+
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/..)
+install(TARGETS moihgp
+  LIBRARY DESTINATION lib
 )

@@ -16,7 +16,6 @@ int main()
     size_t num_latent = 1;
     size_t windowsize = 1;
     double gamma = 0.9;
-    double lambda = 0.0;
     bool threading = false;
     Eigen::MatrixXd H(2, 2);
     H << 0.7, 0.3, -0.3, 0.7;
@@ -30,7 +29,7 @@ int main()
         t += dt;
     }
 
-    moihgp::MOIHGPOnlineLearning<moihgp::Matern32StateSpace> gp(dt, num_output, num_latent, gamma, lambda, windowsize, threading);
+    moihgp::MOIHGPOnlineLearning<moihgp::Matern32StateSpace> gp(dt, num_output, num_latent, gamma, windowsize, threading);
     std::list<Eigen::VectorXd> yhat;
     for (std::list<Eigen::VectorXd>::iterator y = data.begin(); y != data.end(); y++)
     {

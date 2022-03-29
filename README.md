@@ -11,6 +11,7 @@ cd moihgp
 mkdir build && cd build
 cmake ..
 make
+make install
 ```
 
 ## C++ Examples
