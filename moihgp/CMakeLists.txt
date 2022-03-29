@@ -37,6 +37,7 @@ endif()
 ## Your package locations should be listed before other locations
 include_directories(include)
 include_directories(SYSTEM)
+include_directories(${EXTERNAL_INCLUDE_DIRS})
 
 ## Build additional executables
 
@@ -54,7 +55,7 @@ target_link_libraries(example_regression
   pthread
 )
 
-add_library(moihgp MODULE src/wrapper.cpp)
+add_library(moihgp SHARED src/wrapper.cpp)
 target_link_libraries(moihgp
   ${EXTERNAL_LIBS}
   Eigen3::Eigen

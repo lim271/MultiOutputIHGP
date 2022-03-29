@@ -41,7 +41,6 @@ public:
         _dxnew = std::vector<std::vector<Eigen::VectorXd>>(_num_latent, std::vector<Eigen::VectorXd>(_igp_num_param, Eigen::VectorXd(_dim).setZero()));
         for (std::vector<Eigen::VectorXd>::iterator it = Y.begin(); it != Y.end(); it++)
         {
-            //Eigen::VectorXd& y = *it;
             Eigen::VectorXd g(_num_param);
             _gp->step(_x, *it, _dx, _xnew, _dxnew);
             loss += _gp->negLogLikelihood(_x, *it, _dx, g);
@@ -129,7 +128,7 @@ public:
         std::vector<Eigen::VectorXd> Yhat;
         Yhat.reserve(Y.size());
         std::vector<Eigen::VectorXd> x(_num_latent, Eigen::VectorXd(_dim).setZero());
-        for (std::vector<Eigen::VectorXd>::iterator it=Y.begin(); it != Y.end(); it++) {
+        for (std::vector<Eigen::VectorXd>::iterator it = Y.begin(); it != Y.end(); it++) {
             std::vector<Eigen::VectorXd> xnew(_num_latent, Eigen::VectorXd(_dim).setZero());
             Eigen::VectorXd yhat(_num_output);
             _moihgp->step(x, *it, xnew, yhat);

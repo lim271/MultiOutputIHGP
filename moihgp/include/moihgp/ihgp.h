@@ -106,9 +106,9 @@ public:
         G = PP.ldlt().solve(A * PF).transpose();    // G = PF*A*inv(PP)
         DLyap(G, PF - G * PP * G.transpose(), P);    // dlyap(G)
         Xprev.push_back(X.back());
-        for (std::vector<Eigen::VectorXd>::iterator x = X.end(); x != X.begin(); x--)
+        for (size_t idx = X.size() - 1; idx > 0; idx--)
         {
-            Xprev.push_back(*x + G * Xprev.back() - A * (*x));
+            Xprev.push_back(X[idx] + G * Xprev.back() - A * X[idx]);
         }
         std::reverse(Xprev.begin(), Xprev.end());
     }

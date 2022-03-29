@@ -83,12 +83,7 @@ public:
         _dt = dt;
         _num_output = num_output;
         _num_latent = num_latent;
-        _lambda.setZero(1, num_latent);
-        double reg_weight = lambda / double((num_latent - 1) * (num_latent - 1));
-        for (size_t idx = 0; idx < _num_latent; idx++)
-        {
-            _lambda(0, idx) = double(idx * idx) * reg_weight;
-        }
+        _lambda.setConstant(1, num_latent, lambda);
         _IGPs = std::vector<IHGP<StateSpace>*>(num_latent, nullptr);
         for (size_t idx=0; idx < num_latent; idx++)
         {

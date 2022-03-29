@@ -11,6 +11,8 @@ class MOIHGPOnlineLearning:
 
     def __init__(self, dt, num_output, num_latent, gamma, x_init=None, windowsize=None, kernel="Matern32", l1_reg=0.0, threading=False):
         self.moihgp = MOIHGP(dt, num_output, num_latent, l1_reg=l1_reg, threading=threading)
+        self.num_output = num_output
+        self.num_latent = num_latent
         self.ihgp_dim = self.moihgp.igp_dim
         self.ihgp_nparam = self.moihgp.num_igp_param
         self.parameter_bounds = [

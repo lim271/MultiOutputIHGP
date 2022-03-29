@@ -5,7 +5,7 @@
 
 
 const double dare_tol = 1e-8;
-const uint dare_maxiter = 100;
+const unsigned int dare_maxiter = 100;
 
 bool DARE(const Eigen::MatrixXd &Ad, const Eigen::MatrixXd &Bd, const Eigen::MatrixXd &Q, const Eigen::MatrixXd &R, Eigen::MatrixXd &P)
 {
@@ -17,7 +17,7 @@ bool DARE(const Eigen::MatrixXd &Ad, const Eigen::MatrixXd &Bd, const Eigen::Mat
     Eigen::MatrixXd BdT = Bd.transpose();
 
     double diff;
-    for (uint i = 0; i < dare_maxiter; ++i)
+    for (unsigned int iter = 0; iter < dare_maxiter; ++iter)
     {
         // -- discrete solver --
         P_next = AdT * P * Ad - AdT * P * Bd * (R + BdT * P * Bd).inverse() * BdT * P * Ad + Q;
@@ -42,7 +42,7 @@ bool DLyap(const Eigen::MatrixXd &Ad, const Eigen::MatrixXd &Q, Eigen::MatrixXd 
     Eigen::MatrixXd AdT = Ad.transpose();
     
     double diff;
-    for (uint i = 0; i < dare_maxiter; ++i)
+    for (unsigned int iter = 0; iter < dare_maxiter; ++iter)
     {
         // -- discrete solver --
         P_next = AdT * P * Ad - P + Q;

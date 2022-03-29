@@ -32,7 +32,7 @@ int main()
 
     moihgp::MOIHGPOnlineLearning<moihgp::Matern32StateSpace> gp(dt, num_output, num_latent, gamma, lambda, windowsize, threading);
     std::list<Eigen::VectorXd> yhat;
-    for (std::list<Eigen::VectorXd>::iterator y=data.begin(); y!=data.end(); y++)
+    for (std::list<Eigen::VectorXd>::iterator y = data.begin(); y != data.end(); y++)
     {
         clock_t tic = clock();
         yhat.push_back(gp.step(*y));

@@ -1,4 +1,5 @@
 import os.path
+import platform
 from ctypes import POINTER, c_bool, c_double, c_size_t, c_void_p, cdll
 import numpy as np
 
@@ -12,10 +13,21 @@ class MOIHGP(object):
         self.dt = dt
         self.__num_output = num_output
         self.__num_latent = num_latent
-        lib = os.path.join(os.path.dirname(__file__), "build/libmoihgp.so")
-        self.__lib = cdll.LoadLibrary(lib)
+        if platform.system()=="Windows":
+            from ctypes import windll
+            lib = os.path.join(os.path.dirname(__file__), "build\moihgp.dll")
+            self.__lib = windll.LoadLibrary(lib)
+        else:
+            if platform.system()=="Linux":
+                lib = os.path.join(os.path.dirname(__file__), "build/libmoihgp.so")
+            elif platform.system()=="Darwin":
+                lib = os.path.join(os.path.dirname(__file__), "build/libmoihgp.dylib")
+            else:
+                raise NotImplementedError("Unsupported OS type.")
+            self.__lib = cdll.LoadLibrary(lib)
         if kernel=="Matern32":
             self.__lib.gp32_new.restype = c_void_p
+            self.__lib.gp32_new.argtypes = [c_double, c_size_t, c_size_t, c_double, c_bool]
             self.__obj = self.__lib.gp32_new(
                 c_double(dt),
                 c_size_t(num_output),
@@ -25,10 +37,13 @@ class MOIHGP(object):
             )
             self.__del = self.__lib.gp32_del
             self.__lib.gp32_num_param.restype = c_size_t
+            self.__lib.gp32_num_param.argtypes = [c_void_p]
             self.__num_param = int(self.__lib.gp32_num_param(self.__obj))
             self.__lib.gp32_num_igp_param.restype = c_size_t
+            self.__lib.gp32_num_igp_param.argtypes = [c_void_p]
             self.__num_igp_param = int(self.__lib.gp32_num_igp_param(self.__obj))
             self.__lib.gp32_igp_dim.restype = c_size_t
+            self.__lib.gp32_igp_dim.argtypes = [c_void_p]
             self.__igp_dim = int(self.__lib.gp32_igp_dim(self.__obj))
             self.__del = self.__lib.gp32_del
             self.__step1 = self.__lib.gp32_step1
@@ -41,6 +56,7 @@ class MOIHGP(object):
             self.__get_params = self.__lib.gp32_get_params
         elif kernel=="Matern52":
             self.__lib.gp52_new.restype = c_void_p
+            self.__lib.gp52_new.argtypes = [c_double, c_size_t, c_size_t, c_double, c_bool]
             self.__obj = self.lib.gp52_new(
                 c_double(dt),
                 c_size_t(num_output),
@@ -50,10 +66,13 @@ class MOIHGP(object):
             )
             self.__del = self.__lib.gp52_del
             self.__lib.gp52_num_param.restype = c_size_t
+            self.__lib.gp52_num_param.argtypes = [c_void_p]
             self.__num_param = int(self.__lib.gp52_num_param(self.__obj))
             self.__lib.gp52_num_igp_param.restype = c_size_t
+            self.__lib.gp52_num_igp_param.argtypes = [c_void_p]
             self.__num_igp_param = int(self.__lib.gp52_num_igp_param(self.__obj))
             self.__lib.gp52_igp_dim.restype = c_size_t
+            self.__lib.gp52_igp_dim.argtypes = [c_void_p]
             self.__igp_dim = int(self.__lib.gp52_igp_dim(self.__obj))
             self.__del = self.__lib.gp52_del
             self.__step1 = self.__lib.gp52_step1
@@ -75,6 +94,7 @@ class MOIHGP(object):
         self.__lik1.restype = c_double
         self.__lik2.restype = c_double
         self.__get_params.restype = c_void_p
+        self.__del.argtypes = [c_void_p]
         self.__step1.argtypes = [
             c_void_p,
             c_double_p,
@@ -139,16 +159,13 @@ class MOIHGP(object):
         )
         self.__dx_p = self.__dx.ctypes.data_as(c_double_p)
         self.__xnew = np.zeros((self.num_latent, self.igp_dim), dtype=np.float64)
-        #self.__xnew_p = np.ctypeslib.as_ctypes(self.__xnew)
         self.__xnew_p = self.__xnew.ctypes.data_as(c_double_p)
         self.__yhat = np.zeros((self.num_output,), dtype=np.float64)
-        #self.__yhat_p = np.ctypeslib.as_ctypes(self.__yhat)
         self.__yhat_p = self.__yhat.ctypes.data_as(c_double_p)
         self.__dxnew = np.zeros(
             (self.num_latent, self.num_igp_param, self.igp_dim),
             dtype=np.float64
         )
-        #self.__dxnew_p = np.ctypeslib.as_ctypes(self.__dxnew)
         self.__dxnew_p = self.__dxnew.ctypes.data_as(c_double_p)
 
 
