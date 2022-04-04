@@ -46,12 +46,23 @@ class MOIHGPOnlineLearning:
         self.hess_inv = np.eye(len(self.moihgp.params))
         self.buffer = []
         self.windowsize = 1 if windowsize is None else windowsize
-        self.ma = np.zeros((num_output,), dtype=np.float64)
+        self.ma = None
+        self.dma = np.zeros((num_output,), dtype=np.float64)
 
 
     def step(self, y=None):
+        if self.ma is None:
+            self.ma = y.copy()
+            self.ma[np.isnan(self.ma)] = 0.0
+        else:
+            ma_old = self.ma.copy()
+            for i, yi in enumerate(y):
+                if np.isnan(yi):
+                    self.ma[i] += self.dma[i]
+                else:
+                    self.ma[i] = 0.5 * yi + 0.5 * ma_old[i]
+            self.dma = self.ma - ma_old
         self.buffer.append(y)
-        self.ma = np.mean(self.buffer, axis=0)
         while len(self.buffer) > self.windowsize:
             self.buffer.pop(0)
             self.xinit, _, self.dxinit = self.moihgp.step(self.xinit, y = self.buffer[0] - self.ma, dx = self.dxinit)

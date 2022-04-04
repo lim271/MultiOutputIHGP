@@ -48,10 +48,8 @@ if __name__=='__main__':
             ii = slice(i*2, (i+1)*2)
             for j in range(num_output//2):
                 jj = slice(j*2, (j+1)*2)
-                Corr[i, j] = np.sign(np.trace(Cov[ii, jj])) * np.sqrt(
-                    np.trace(
-                        np.linalg.solve(Cov[ii, ii], Cov[ii, jj]) @ np.linalg.solve(Cov[jj, jj], Cov[jj, ii])
-                    ) / 2
+                Corr[i, j] = np.sum(np.linalg.eigvals(Cov[ii, jj])) / np.sqrt(
+                    np.sum(np.linalg.eigvals(Cov[ii, ii])) * np.sum(np.linalg.eigvals(Cov[jj, jj]))
                 )
         print(Corr)
     yhat = np.array(yhat)
