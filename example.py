@@ -31,7 +31,7 @@ if __name__=='__main__':
         p22.append(p22[-1] + v22[-1] * dt)
     data = np.hstack([p11, p12, p21, p22])
     _, num_output = data.shape
-    num_latent = round(num_output * 2 / 3)
+    num_latent = num_output // 2
     gp = MOIHGPOnlineLearning(
         dt, num_output, num_latent,
         gamma=gamma, windowsize=windowsize, threading=False

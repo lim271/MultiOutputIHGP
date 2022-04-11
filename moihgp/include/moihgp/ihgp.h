@@ -162,7 +162,8 @@ public:
             {
                 Eigen::MatrixXd FF(2 * _dim, 2 * _dim);
                 FF.topLeftCorner(_dim, _dim) = _ss.F;
-                FF.bottomRightCorner(_dim, _dim) = _ss.dF[idx];
+                FF.bottomRightCorner(_dim, _dim) = _ss.F;
+                FF.bottomLeftCorner(_dim, _dim) = _ss.dF[idx];
                 dA[idx] = ((_dt * FF).exp()).bottomLeftCorner(_dim, _dim);
                 dAT = dA[idx].transpose();
                 if (_ss.dPinf[idx]==zeros)
